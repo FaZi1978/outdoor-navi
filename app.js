@@ -289,7 +289,7 @@ $('btnStart').onclick = () => {
     const keepAll = state.allTime;
     state = { running: true, paused: false, points: [], distance: 0, activeMs: 0, maxSpeed: 0, startedAt: Date.now(), resumedAt: Date.now(), allTime: keepAll };
     trackLine.setLatLngs([]);
-    toast('Aufzeichnung gestartet');
+    toast('Aufzeichnung gestartet – Display nicht ausschalten, für die Tasche: ☰ → 🌙 Taschenmodus', 6000);
   } else {
     state.paused = false; state.resumedAt = Date.now(); state.gapNext = true;
     toast('Fortgesetzt');
@@ -405,9 +405,9 @@ $('btnResetAll').onclick = () => {
 
 /* ---------- Toast ---------- */
 let toastTimer;
-function toast(msg) {
+function toast(msg, ms) {
   const t = $('toast'); t.textContent = msg; t.hidden = false;
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3000);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, ms || 3000);
 }
 
 /* ---------- Start ---------- */
