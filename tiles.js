@@ -91,7 +91,7 @@
 
   // Tippen auf die Karte blendet aus – die Statistik oben während einer laufenden Tour aber nicht
   map.on('click', () => {
-    if (rightDrawer.isOpen()) rightDrawer.hide();
+    if (rightDrawer.isOpen()) { rightDrawer.hide(); window.tilesClosedAt = Date.now(); }
     if (topDrawer.isOpen() && !(state.running && !state.paused)) topDrawer.hide();
   });
 
