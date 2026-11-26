@@ -419,6 +419,19 @@ if (state.running && !state.paused) { state.resumedAt = state.resumedAt || Date.
 render();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  // Knopf „App aktualisieren“: App-Speicher leeren (Kartenkacheln, Fotos und Touren bleiben) und frisch laden
+  document.getElementById('btnUpdate').onclick = async () => {
+    if (state.running && !confirm('Eine Aufzeichnung läuft. Trotzdem neu laden?')) return;
+    try {
+      for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+      for (const k of await caches.keys()) if (k.startsWith('outdoor-app')) await caches.delete(k);
+      // Auch den Browser-Cache der eigenen Dateien auffrischen
+      const own = [...document.querySelectorAll('script[src], link[rel=stylesheet]')]
+        .map((n) => n.src || n.href).filter((u) => u.startsWith(location.origin));
+      await Promise.all(['sw.js', ...own].map((u) => fetch(u, { cache: 'reload' }).catch(() => {})));
+    } catch (e) { /* trotzdem neu laden */ }
+    location.replace(location.pathname + '?v=' + Date.now());
+  };
   // updateViaCache 'none': sw.js selbst immer frisch prüfen
   navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
     .then((reg) => reg.update()).catch(() => {});
