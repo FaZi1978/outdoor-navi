@@ -139,7 +139,7 @@
   setInterval(() => { if (!el('weather').hidden) refresh(false); }, 60 * 1000);
   window.addEventListener('online', () => { if (!el('weather').hidden) refresh(true); });
 
-  // Kachel auf der Karte (unter der Legenden-Kachel)
+  // Kachel auf der Karte (über der Legenden-Kachel)
   const WeatherButton = L.Control.extend({
     options: { position: 'topright' },
     onAdd() {
@@ -150,7 +150,9 @@
       return b;
     }
   });
-  new WeatherButton().addTo(map);
+  const wb = new WeatherButton().addTo(map).getContainer();
+  const lg = wb.parentNode.querySelector('button[title="Legende"]');
+  if (lg) wb.parentNode.insertBefore(wb, lg);
 
   try { localStorage.removeItem('outdoorNavi.radar'); localStorage.removeItem('outdoorNavi.weatherMap'); } catch (e) {}
 })();
