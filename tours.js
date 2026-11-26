@@ -84,16 +84,17 @@
 
     // Kartenkacheln (aus dem Offline-Speicher oder dem Netz)
     const jobs = [];
+    let loaded = 0;
     for (let x = Math.floor(ox / 256); x <= Math.floor((ox + IMG_W) / 256); x++) {
       for (let y = Math.floor(oy / 256); y <= Math.floor((oy + IMG_H) / 256); y++) {
         const s = 'abc'[Math.abs(x + y) % 3];
         jobs.push(loadImg(`https://${s}.tile.opentopomap.org/${z}/${x}/${y}.png`).then((img) => {
-          if (img) g.drawImage(img, x * 256 - ox, y * 256 - oy);
+          if (img) { g.drawImage(img, x * 256 - ox, y * 256 - oy); loaded++; }
         }));
       }
     }
-    const tiles = await Promise.all(jobs);
-    void tiles;
+    await Promise.all(jobs);
+    const complete = loaded === jobs.length;
 
     // Strecke (Abschnitte nach Pausen getrennt)
     const draw = (color, width) => {
@@ -123,7 +124,26 @@
     g.fillStyle = 'rgba(255,255,255,0.8)'; g.fillRect(IMG_W - w - 10, IMG_H - 18, w + 10, 18);
     g.fillStyle = '#333'; g.fillText(txt, IMG_W - 5, IMG_H - 4);
 
-    return new Promise((r) => cv.toBlob(r, 'image/jpeg', 0.88));
+    const blob = await new Promise((r) => cv.toBlob(r, 'image/jpeg', 0.88));
+    return { blob, complete };
+  }
+
+  // Tourbilder, bei denen Kartenteile fehlten (z. B. schlechter Empfang beim Speichern),
+  // werden nachgebessert, sobald Internet da ist
+  const fixing = new Set();
+  async function repairImage(t) {
+    if (t.imageComplete === true || !navigator.onLine || fixing.has(t.id)) return null;
+    fixing.add(t.id);
+    try {
+      const r = await makeTourImage(t.points);
+      if (r.blob && (r.complete || !t.image)) {
+        t.image = r.blob; t.imageComplete = r.complete;
+        await putTour(t);
+        return t;
+      }
+    } catch (e) { console.error('Tourbild nachbessern', e); }
+    finally { fixing.delete(t.id); }
+    return null;
   }
 
   /* ---------- Tour speichern (aufgerufen von app.js) ---------- */
@@ -136,11 +156,11 @@
       const id = 'tour-' + start;
       if (await getTour(id)) return id;   // schon gespeichert
       const stats = computeStats(points, s.activeMs, s.maxSpeed, s.distance);
-      let image = null;
-      try { image = await makeTourImage(points); } catch (e) { console.error('Tourbild', e); }
+      let image = null, imageComplete = false;
+      try { const r = await makeTourImage(points); image = r.blob; imageComplete = r.complete; } catch (e) { console.error('Tourbild', e); }
       const d = new Date(start);
       const tour = {
-        id, start, end, points, stats, image,
+        id, start, end, points, stats, image, imageComplete,
         name: 'Tour am ' + d.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })
       };
       await putTour(tour);
@@ -183,6 +203,13 @@
     el('toursBody').querySelectorAll('.t-list li').forEach((li) => { li.onclick = () => openDetail(li.dataset.id); });
     el('toursTitle').textContent = 'Meine Touren';
     el('toursBack').hidden = true;
+    // Unvollständige Tourbilder nacheinander im Hintergrund nachbessern
+    for (const t of tours) {
+      const fixed = await repairImage(t);
+      if (!fixed || el('tours').hidden) continue;
+      const img = el('toursBody').querySelector(`.t-list li[data-id="${t.id}"] img`);
+      if (img) img.src = blobUrl(fixed.image);
+    }
   }
 
   /* ---------- Detailansicht ---------- */
@@ -222,8 +249,13 @@
       </div>
       <button id="tDel" class="danger">Tour löschen</button>`;
 
-    drawProfile(el('tProfile'), t.points);
-    if (imgUrl) el('tImage').onclick = () => openImage(imgUrl);
+    // Profil erst zeichnen, wenn das Layout steht (sonst Breite 0 auf manchen Handys)
+    requestAnimationFrame(() => drawProfile(el('tProfile'), t.points));
+    if (imgUrl) el('tImage').onclick = () => openImage(el('tImage').src);
+    repairImage(t).then((fixed) => {
+      const img = el('tImage');
+      if (fixed && img) img.src = blobUrl(fixed.image);
+    });
     el('toursBody').querySelectorAll('.t-photos img').forEach((img) => {
       img.onclick = () => photoStore.openViewer(img.dataset.pid, photos.map((p) => p.id));
     });
