@@ -266,6 +266,36 @@ button:disabled { opacity: .5; }
 }
 #statsEdge.hidden { display: none; }
 
+/* Fitnessdaten */
+#fitness {
+  position: fixed; z-index: 1003; left: 8px; right: 8px;
+  top: calc(8px + env(safe-area-inset-top)); bottom: calc(84px + env(safe-area-inset-bottom));
+  max-width: 480px; margin: 0 auto; padding: 10px 12px; display: block;
+  background: var(--bg); border-radius: 14px; box-shadow: var(--shadow); backdrop-filter: blur(6px);
+  overflow-y: auto; font-size: 14px;
+}
+#fitness[hidden] { display: none; }
+#fitness > .pl-head { margin-bottom: 8px; }
+.fit-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+.fit-form label { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; font-weight: 600; }
+.fit-form label small { font-weight: 400; color: var(--muted); }
+.fit-form .fit-note { flex-basis: 100%; margin-top: -4px; font-size: 12px; }
+.fit-form label > span { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; }
+.fit-form input { width: 90px; text-align: right; font-size: 16px; padding: 6px 8px; }
+.fit-form select { font-size: 16px; padding: 6px 8px; min-width: 170px; }
+#fitSave { width: 100%; margin: 12px 0 4px; }
+#fitness .hint { margin: 6px 0 0; }
+/* Kalorien-Kachel (links, unter den Zoom-Knöpfen) */
+#kcalTile {
+  position: fixed; z-index: 999; left: 10px; top: calc(240px + env(safe-area-inset-top));
+  min-width: 64px; padding: 6px 8px; border: 0; border-radius: 10px; background: #fff; color: #1d241f;
+  box-shadow: 0 1px 5px rgba(0,0,0,.4); font-size: 15px; line-height: 1.15; text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+#kcalTile[hidden] { display: none; }
+#kcalTile b { font-size: 18px; }
+#kcalTile small { font-size: 11px; color: #5f6b62; }
+
 /* Taschenmodus */
 #pocket {
   position: fixed; inset: 0; z-index: 9999; background: #000; color: #555;
@@ -358,6 +388,7 @@ progress[hidden] { display: none; }
 .t-stats div { background: rgba(127,127,127,.08); border-radius: 8px; padding: 6px 8px; display: flex; flex-direction: column; }
 .t-stats span { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
 .t-stats b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.t-stats .t-kcal { grid-column: 1 / -1; background: rgba(230,120,20,.12); }
 #tProfile { width: 100%; height: 80px; display: block; }
 #tProfile[hidden] { display: none; }
 #toursBody h4 { margin: 4px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
