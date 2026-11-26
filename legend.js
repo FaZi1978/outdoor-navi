@@ -27,9 +27,7 @@
     ['<div class="wp-marker end" style="margin:auto">B</div>', 'Ziel der Route'],
     [line('#b23a2e', 3, '6 8'), 'Luftlinie zum Navigationsziel'],
     [line('#6a3fb5', 5), 'Geladene GPX-Route'],
-    ['<div class="photo-marker legend-photo">📷</div>', 'Foto (antippen zum Öffnen)'],
-    [`<span class="radar-ramp"></span>`,
-      'Wetterradar: Niederschlag in mm/h<br><small>türkis = leicht · grün/gelb = mäßig · rot = stark · violett/blau = Unwetter<br>grau = keine Radardaten</small>']
+    ['<div class="photo-marker legend-photo">📷</div>', 'Foto (antippen zum Öffnen)']
   ];
 
   // [Datei, Bezeichnung] – aus der offiziellen OpenTopoMap-Legende
