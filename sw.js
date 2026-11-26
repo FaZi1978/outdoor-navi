@@ -1,12 +1,12 @@
 // Service Worker: macht die App offline nutzbar
 // - App-Dateien + Bibliotheken: sofort aus dem Cache, im Hintergrund aktualisieren
 // - Kartenkacheln: Cache zuerst (auch die per „Offline-Karten“ geladenen), sonst Netz
-const APP_CACHE = 'outdoor-app-v34';
+const APP_CACHE = 'outdoor-app-v35';
 const TILE_CACHE = 'outdoor-tiles-v2';     // muss zu offline.js passen
 const LEAFLET = 'https://unpkg.com/leaflet@1.9.4/dist/';
 const APP_FILES = [
   './', './index.html', './style.css', './app.js', './route.js', './photos.js', './legend.js',
-  './military.js', './offline.js', './pressure.js', './tours.js', './weather.js', './pocket.js', './fitness.js', './tiles.js', './manifest.json', './icon.svg',
+  './military.js', './offline.js', './pressure.js', './tours.js', './weather.js', './pocket.js', './fitness.js', './tiles.js', './areas.js', './manifest.json', './icon.svg',
   './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   LEAFLET + 'leaflet.css', LEAFLET + 'leaflet.js',
   LEAFLET + 'images/marker-icon.png', LEAFLET + 'images/marker-icon-2x.png', LEAFLET + 'images/marker-shadow.png',
@@ -29,7 +29,8 @@ self.addEventListener('activate', (e) => {
     .then(() => self.clients.claim()));
 });
 
-const isTile = (url) => url.hostname.endsWith('tile.opentopomap.org') || url.hostname === 'geodienste.bfn.de'
+const isTile = (url) => url.hostname.endsWith('tile.opentopomap.org')
+  || (url.hostname === 'geodienste.bfn.de' && !/GetFeatureInfo/i.test(url.search))   // Info-Abfragen nicht cachen
   || (url.hostname === 'tiles.openfreemap.org' && url.pathname.endsWith('.pbf'))
   || (url.hostname === 'opentopomap.org' && url.pathname.startsWith('/img/legende/'));
 const isApp = (url) => url.origin === self.location.origin || url.hostname === 'unpkg.com' || url.hostname === 'cdn.jsdelivr.net';
