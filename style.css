@@ -251,6 +251,19 @@ button:disabled { opacity: .5; }
   background: rgba(29,36,31,.45); box-shadow: 0 0 0 1px rgba(255,255,255,.7);
 }
 #tileEdge.hidden { display: none; }
+/* Kacheln oben (Statistik): versteckt, per Wischen vom oberen Rand einblenden */
+.top-tiles { transform: translateY(calc(-100% - 24px - env(safe-area-inset-top))); transition: transform .25s ease; }
+.top-tiles.open { transform: none; }
+#statsEdge {
+  position: fixed; z-index: 999; top: 0; left: 0; right: 0; height: calc(30px + env(safe-area-inset-top));
+  touch-action: none; display: flex; align-items: flex-start; justify-content: center; cursor: pointer;
+  padding-top: calc(4px + env(safe-area-inset-top));
+}
+#statsEdge span {
+  width: 56px; height: 5px; border-radius: 3px;
+  background: rgba(29,36,31,.45); box-shadow: 0 0 0 1px rgba(255,255,255,.7);
+}
+#statsEdge.hidden { display: none; }
 
 /* Taschenmodus */
 #pocket {
