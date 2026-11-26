@@ -125,14 +125,9 @@
       </li>`;
     }
     html += `</ul>
-      <button id="wxMapBtn" class="${map.hasLayer(wxLayer) ? '' : 'primary'}">🌧 Wetterradar ${map.hasLayer(wxLayer) ? 'ausblenden' : 'einblenden'}</button>
       <p class="hint">${data.gps ? 'Für deinen Standort' : 'Für die Kartenmitte (kein GPS)'} · Stand: vor ${ageMin < 1 ? 'weniger als 1' : ageMin} Min.${navigator.onLine ? '' : ' · offline – letzter bekannter Stand'}<br>
       Wind in km/h, Pfeil zeigt, wohin der Wind weht. Quelle: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> (Wettermodelle u. a. DWD)</p>`;
     body.innerHTML = html;
-    el('wxMapBtn').onclick = () => {
-      if (map.hasLayer(wxLayer)) map.removeLayer(wxLayer); else { wxLayer.addTo(map); box.hidden = true; }
-      render();
-    };
   }
 
   function openPanel() {
@@ -157,136 +152,5 @@
   });
   new WeatherButton().addTo(map);
 
-  /* =========================================================
-     2) Wetterradar (Deutscher Wetterdienst, Niederschlagsradar)
-        1 km Auflösung, alle 5 Minuten neu, Deutschland + Grenzgebiete.
-        Animation: letzte Stunde + Vorhersage bis 2 Stunden.
-     ========================================================= */
-  const WMS = 'https://maps.dwd.de/geoserver/dwd/wms';
-  const CAPS = 'https://maps.dwd.de/geoserver/dwd/Niederschlagsradar/ows?service=WMS&version=1.3.0&request=GetCapabilities';
-  const RADARKEY = 'outdoorNavi.radar';
-  map.createPane('radar').style.zIndex = 390;   // über der Karte, unter Schutzgebieten/Markern
-  const wxLayer = L.layerGroup();
-  layerControl.addOverlay(wxLayer, '🌧 Wetterradar (DWD)');
-  try { localStorage.removeItem('outdoorNavi.weatherMap'); } catch (e) {}   // alte Wetterkarte
-
-  const bar = el('radarBar'), slider = el('radarSlider'), playBtn = el('radarPlay'), label = el('radarTime');
-  let frames = [], layers = [], idx = 0, nowIdx = 0, refMs = 0;
-  let playing = true, anim = null, reloadTimer = null, loadingTimes = false;
-
-  async function loadTimes() {
-    let ref = null, end = null;
-    try {
-      const txt = await (await fetch(CAPS)).text();
-      const r = /name="REFERENCE_TIME" default="([^"]+)"/.exec(txt);
-      const t = /name="time"[^>]*>[^<]*?\/([^/<]+)\/PT/.exec(txt);
-      if (r) ref = Date.parse(r[1]);
-      if (t) end = Date.parse(t[1]);
-    } catch (e) { /* unten Ersatzwert */ }
-    if (!ref) {   // Fallback: letzte volle 5 Minuten minus Verarbeitungszeit
-      ref = Math.floor((Date.now() - 10 * 60000) / 300000) * 300000;
-      end = ref;
-    }
-    const list = [];
-    for (let m = -60; m <= 0; m += 10) list.push(ref + m * 60000);
-    for (let m = 15; m <= 120; m += 15) if (!end || ref + m * 60000 <= end) list.push(ref + m * 60000);
-    return { ref, list };
-  }
-
-  function clearFrames() {
-    layers.forEach((l) => wxLayer.removeLayer(l));
-    layers = []; frames = [];
-  }
-
-  async function start() {
-    if (!navigator.onLine) { toast('Wetterradar braucht Internet'); return; }
-    if (loadingTimes) return;
-    loadingTimes = true;
-    const { ref, list } = await loadTimes();
-    loadingTimes = false;
-    if (!map.hasLayer(wxLayer)) return;
-    if (ref === refMs && layers.length) return;           // nichts Neues
-    const keepPlaying = playing;
-    clearFrames();
-    refMs = ref; frames = list; nowIdx = list.indexOf(ref);
-    layers = list.map((t) => L.tileLayer.wms(WMS, {
-      layers: 'dwd:Niederschlagsradar', styles: '', format: 'image/png', transparent: true, version: '1.3.0',
-      time: new Date(t).toISOString(), tileSize: 512, pane: 'radar', opacity: 0, maxZoom: 19,
-      attribution: 'Radar: © <a href="https://www.dwd.de" target="_blank" rel="noopener">Deutscher Wetterdienst</a>'
-    }));
-    slider.max = list.length - 1;
-    bar.hidden = false;
-    // Zuerst nur das aktuelle Bild laden (sofort sichtbar), danach die übrigen Zeitpunkte
-    const mine = layers;
-    layers[nowIdx].addTo(wxLayer);
-    show(nowIdx);
-    setPlaying(false);
-    preloading = true; showLoading();
-    layers[nowIdx].once('load', () => {
-      if (layers !== mine) return;
-      let left = layers.length - 1;
-      const done = () => {
-        if (layers !== mine || --left > 0) return;
-        preloading = false; show(idx);
-        if (keepPlaying) setPlaying(true);
-      };
-      layers.forEach((l, i) => { if (i !== nowIdx) { l.once('load', done); l.addTo(wxLayer); } });
-      if (left === 0) done();
-    });
-  }
-  let preloading = false;
-  function showLoading() { if (preloading) label.innerHTML += ' <small>· lädt Animation…</small>'; }
-
-  function show(i) {
-    if (!layers.length) return;
-    if (layers[idx]) layers[idx].setOpacity(0);
-    idx = i;
-    layers[idx].setOpacity(0.75);
-    slider.value = idx;
-    const t = frames[idx], diff = Math.round((t - refMs) / 60000);
-    const hhmm = new Date(t).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    label.innerHTML = `<b>${hhmm}</b> ${diff === 0 ? 'jetzt' : diff < 0 ? `vor ${-diff} Min.` : `<span class="fc">Vorhersage +${diff} Min.</span>`}`;
-    showLoading();
-  }
-
-  function step() {
-    if (idx >= layers.length - 1) { show(0); return; }
-    show(idx + 1);
-  }
-  function setPlaying(p) {
-    playing = p;
-    clearInterval(anim);
-    playBtn.textContent = p ? '⏸' : '▶';
-    playBtn.title = p ? 'Anhalten' : 'Abspielen';
-    if (p) anim = setInterval(() => { if (idx === layers.length - 1) { clearInterval(anim); setTimeout(() => { if (playing) { show(0); setPlaying(true); } }, 1200); } else step(); }, 700);
-  }
-  playBtn.onclick = () => { if (preloading) { toast('Animation lädt noch…'); return; } setPlaying(!playing); };
-  slider.oninput = () => { setPlaying(false); show(+slider.value); };
-  el('radarNow').onclick = () => { setPlaying(false); show(nowIdx); };
-
-  function stop() {
-    clearInterval(anim); clearInterval(reloadTimer);
-    clearFrames(); refMs = 0; preloading = false; playing = true;
-    bar.hidden = true;
-  }
-
-  // layeradd/layerremove: gilt für die Ebenen-Auswahl und für den Knopf im Wetterfenster
-  map.on('layeradd', (e) => {
-    if (e.layer !== wxLayer) return;
-    try { localStorage.setItem(RADARKEY, '1'); } catch (err) {}
-    start();
-    clearInterval(reloadTimer);
-    reloadTimer = setInterval(start, 5 * 60 * 1000);   // neue Radarbilder alle 5 Minuten
-    render();
-  });
-  map.on('layerremove', (e) => {
-    if (e.layer !== wxLayer) return;
-    try { localStorage.setItem(RADARKEY, '0'); } catch (err) {}
-    stop();
-    render();
-  });
-  window.addEventListener('online', () => { if (map.hasLayer(wxLayer)) start(); });
-  let on = false;
-  try { on = localStorage.getItem(RADARKEY) === '1'; } catch (e) {}
-  if (on) wxLayer.addTo(map);
+  try { localStorage.removeItem('outdoorNavi.radar'); localStorage.removeItem('outdoorNavi.weatherMap'); } catch (e) {}
 })();
