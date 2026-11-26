@@ -27,7 +27,11 @@
     ['<div class="wp-marker end" style="margin:auto">B</div>', 'Ziel der Route'],
     [line('#b23a2e', 3, '6 8'), 'Luftlinie zum Navigationsziel'],
     [line('#6a3fb5', 5), 'Geladene GPX-Route'],
-    ['<div class="photo-marker legend-photo">📷</div>', 'Foto (antippen zum Öffnen)']
+    ['<div class="photo-marker legend-photo">📷</div>', 'Foto (antippen zum Öffnen)'],
+    ['<b style="color:#1f5fbf;font-size:22px">H</b>&nbsp;<b style="color:#c62d25;font-size:22px">T</b>', 'Wetterkarte: Hoch- und Tiefdruckgebiet (mit Luftdruck in hPa)'],
+    [line('#3c4a8c', 2), 'Isobare: Linie gleichen Luftdrucks (alle 4 hPa)<br><small>eng beieinander = viel Wind</small>'],
+    [['#4a7f5b', '#2f6fd6', '#e08a00', '#d6332a', '#8b1a8b'].map((c) => `<svg width="10" height="14" viewBox="0 0 16 16"><path d="M8 1 13 12 8 9.5 3 12Z" fill="${c}"/></svg>`).join(''),
+      'Windpfeil (zeigt, wohin der Wind weht) mit Temperatur<br><small>bis 12 · 25 · 40 · 62 · darüber km/h</small>']
   ];
 
   // [Datei, Bezeichnung] – aus der offiziellen OpenTopoMap-Legende
