@@ -84,7 +84,7 @@
     <button id="btnResetAll" class="danger">Σ alle Touren zurücksetzen</button>
     <p class="hint">Tipp: Lange auf die Karte drücken (oder Rechtsklick), um ein Navigationsziel zu setzen.</p>
     <button id="btnUpdate">🔄 App aktualisieren</button>
-    <p class="hint" id="appVersion">Version 24</p>
+    <p class="hint" id="appVersion">Version 25</p>
   </div>
 
   <!-- Routenplaner -->
@@ -178,6 +178,16 @@
   </section>
 
   <!-- Kartenlegende -->
+  <!-- Zeitleiste des Wetterradars -->
+  <div id="radarBar" hidden>
+    <button id="radarPlay" class="icon small" title="Anhalten">⏸</button>
+    <div class="rb-mid">
+      <div id="radarTime">–</div>
+      <input id="radarSlider" type="range" min="0" max="0" step="1" value="0">
+    </div>
+    <button id="radarNow" class="small">Jetzt</button>
+  </div>
+
   <section id="weather" hidden>
     <div class="pl-head">
       <b>⛅ Wetter</b>
