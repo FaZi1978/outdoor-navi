@@ -42,11 +42,15 @@
     <div class="sub">
       <span>⏱ <b id="time">00:00:00</b></span>
       <span>⛰ <b id="alt">–</b> m</span>
+      <span id="pressBox" class="press" title="Luftdruck – antippen für Details">⏲ <b id="press">–</b> hPa <span id="pressTrend"></span></span>
       <span>🎯 <b id="gpsAcc">–</b></span>
       <span>Σ alle Touren: <b id="distAll">0.0</b> km</span>
       <span id="netState" class="net-off" hidden>📴 Offline</span>
     </div>
   </section>
+
+  <!-- Luftdruck-Details -->
+  <section id="pressInfo" hidden></section>
 
   <!-- Navigationsziel -->
   <section id="navBox" hidden>
@@ -190,5 +194,6 @@
   <script src="military.js"></script>
   <script src="legend.js"></script>
   <script src="offline.js"></script>
+  <script src="pressure.js"></script>
 </body>
 </html>
