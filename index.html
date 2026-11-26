@@ -75,6 +75,7 @@
   <div id="menu" hidden>
     <label class="filebtn primary">📷 Foto aufnehmen<input type="file" id="cameraInput" accept="image/*" capture="environment" hidden></label>
     <label class="filebtn">🖼 Fotos mit GPS hinzufügen<input type="file" id="photoInput" accept="image/*,.heic,.heif" multiple hidden></label>
+    <button id="btnTours" class="primary">📚 Meine Touren</button>
     <button id="btnOffline">⬇ Offline-Karten</button>
     <button id="btnLegend">ⓘ Kartenlegende</button>
     <button id="btnGpxExport">Track als GPX speichern</button>
@@ -117,6 +118,16 @@
       <button id="plGpx">GPX speichern</button>
       <button id="plGo" class="primary">▶ Route folgen</button>
     </div>
+  </section>
+
+  <!-- Meine Touren -->
+  <section id="tours" hidden>
+    <div class="pl-head">
+      <button id="toursBack" class="icon small" title="Zurück zur Liste" hidden>‹</button>
+      <b id="toursTitle">Meine Touren</b>
+      <button id="toursClose" class="icon small" title="Schließen">✕</button>
+    </div>
+    <div id="toursBody"></div>
   </section>
 
   <!-- Offline-Karten -->
@@ -195,5 +206,6 @@
   <script src="legend.js"></script>
   <script src="offline.js"></script>
   <script src="pressure.js"></script>
+  <script src="tours.js"></script>
 </body>
 </html>
