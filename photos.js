@@ -60,7 +60,8 @@
     box.innerHTML = `
       <div class="photo-wrap" title="Antippen für Vollbild"><img class="photo-big" src="${full}" alt=""><span class="photo-zoom">⛶</span></div>
       <div class="photo-meta">${when ? '📅 ' + when + '<br>' : ''}📍 ${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}
-        ${p.source === 'exif' ? '' : '<br><small>(Position manuell/aktuell gesetzt)</small>'}</div>
+        ${{ exif: '', gps: '<br><small>(Position: GPS beim Aufnehmen)</small>', track: '<br><small>(Position aus der Tourstrecke zur Aufnahmezeit)</small>' }[p.source] ?? '<br><small>(Position manuell gesetzt)</small>'}
+        ${p.tourId ? '<br>🥾 Teil einer Tour' : ''}</div>
       <div class="photo-actions">
         <button data-a="nav">🎯 Hinführen</button>
         <button data-a="move">✥ Verschieben</button>
@@ -248,8 +249,29 @@
   let placing = [];   // Fotos ohne GPS, die auf die Karte getippt werden sollen
   window.photoPlacing = false;
 
-  async function importFiles(files, fromCamera) {
+  // Position auf einer Strecke zu einem Zeitpunkt (zwischen zwei Trackpunkten interpoliert)
+  function posAtTime(points, t) {
+    if (!points || points.length < 1 || t == null) return null;
+    if (t <= points[0][3]) return [points[0][0], points[0][1]];
+    const last = points[points.length - 1];
+    if (t >= last[3]) return [last[0], last[1]];
+    let lo = 0, hi = points.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (points[mid][3] <= t) lo = mid; else hi = mid; }
+    const a = points[lo], b = points[hi], f = (t - a[3]) / ((b[3] - a[3]) || 1);
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+  }
+  // ID der laufenden Aufzeichnung (gleiches Schema wie beim Speichern in tours.js)
+  function runningTourId() {
+    if (!state.running) return null;
+    const start = state.startedAt || (state.points[0] && state.points[0][3]);
+    return start ? 'tour-' + start : null;
+  }
+
+  /* opts.tourId / opts.track: Fotos gezielt einer gespeicherten Tour zuordnen (aus „Meine Touren“) */
+  async function importFiles(files, fromCamera, opts) {
+    opts = opts || {};
     let added = 0, noGps = 0, failed = 0, last = null;
+    const tourId = opts.tourId || runningTourId();
     for (const file of files) {
       try {
         let lat = null, lng = null, taken = null;
@@ -268,22 +290,31 @@
           name: file.name, taken: taken || (fromCamera ? Date.now() : file.lastModified || null),
           image: await resize(file, FULL_PX, 0.85),
           thumb: await resize(file, THUMB_PX, 0.8),
-          lat, lng, source: 'exif'
+          lat, lng, source: 'exif',
+          tourId: tourId || null   // fest mit der Tour verknüpft
         };
-        if (lat == null && fromCamera && lastFix) { p.lat = lastFix.p[0]; p.lng = lastFix.p[1]; p.source = 'gps'; }
+        // Ohne GPS im Foto: aktuelle Position (Kamera) – sonst Ort auf der Tourstrecke zur Aufnahmezeit
+        if (p.lat == null && fromCamera && lastFix) { p.lat = lastFix.p[0]; p.lng = lastFix.p[1]; p.source = 'gps'; }
+        if (p.lat == null) {
+          const track = opts.track || (state.running ? state.points : null);
+          const pos = posAtTime(track, p.taken);
+          if (pos) { p.lat = pos[0]; p.lng = pos[1]; p.source = 'track'; }
+        }
         if (p.lat == null) { placing.push(p); noGps++; continue; }
         await dbPut(p); addMarker(p); added++; last = p;
       } catch (e) {
         console.error(e); failed++;
       }
     }
-    if (last) map.setView([last.lat, last.lng], Math.max(map.getZoom(), 14));
-    if (last) follow = false;
-    let msg = added ? `${added} Foto${added > 1 ? 's' : ''} auf der Karte` : '';
+    // Während der Aufzeichnung die Karte nicht vom Standort wegbewegen
+    if (last && !opts.tourId && !state.running) { map.setView([last.lat, last.lng], Math.max(map.getZoom(), 14)); follow = false; }
+    let msg = added ? `${added} Foto${added > 1 ? 's' : ''} ${tourId ? 'zur Tour gespeichert' : 'auf der Karte'}` : '';
     if (failed) msg += (msg ? ' · ' : '') + `${failed} nicht lesbar (Format?)`;
     if (msg) toast(msg);
     if (noGps) askPlacement();
+    return added;
   }
+  window.photoStore.import = importFiles;
 
   function askPlacement() {
     if (!placing.length) { window.photoPlacing = false; el('photoPlace').hidden = true; return; }
@@ -305,6 +336,7 @@
 
   el('photoInput').onchange = (e) => { el('menu').hidden = true; importFiles([...e.target.files], false); e.target.value = ''; };
   el('cameraInput').onchange = (e) => { el('menu').hidden = true; importFiles([...e.target.files], true); e.target.value = ''; };
+  el('tourCamInput').onchange = (e) => { importFiles([...e.target.files], true); e.target.value = ''; };
 
   /* ---------- Start: gespeicherte Fotos laden ---------- */
   dbAll().then((list) => list.forEach(addMarker)).catch((e) => console.error('Fotos laden', e));
