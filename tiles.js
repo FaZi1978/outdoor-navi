@@ -82,11 +82,18 @@
 
   /* ---------- oben: Statistik-Kacheln ---------- */
   const topDrawer = drawer({
-    panel: document.getElementById('stats'), cls: 'top-tiles', edgeId: 'statsEdge', axis: 'y', openSign: 1
+    panel: document.getElementById('stats'), cls: 'top-tiles', edgeId: 'statsEdge', axis: 'y', openSign: 1,
+    // Während einer laufenden Tour nicht automatisch ausblenden (Wischen/Tippen blendet weiter aus)
+    keepOpen: () => state.running && !state.paused
   });
+  // App während einer laufenden Tour neu geöffnet → Kacheln gleich zeigen
+  if (state.running && !state.paused) topDrawer.show();
 
-  // Tippen auf die Karte blendet alles aus
-  map.on('click', () => drawers.forEach((d) => { if (d.isOpen()) d.hide(); }));
+  // Tippen auf die Karte blendet aus – die Statistik oben während einer laufenden Tour aber nicht
+  map.on('click', () => {
+    if (rightDrawer.isOpen()) rightDrawer.hide();
+    if (topDrawer.isOpen() && !(state.running && !state.paused)) topDrawer.hide();
+  });
 
   window.sideTiles = rightDrawer;
   window.topTiles = topDrawer;
