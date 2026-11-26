@@ -239,7 +239,7 @@ button:disabled { opacity: .5; }
 }
 .wx-t { white-space: nowrap; }
 /* Kacheln rechts: versteckt, per Wischen vom Rand einblenden */
-.side-tiles { transform: translateX(calc(100% + 16px)); transition: transform .25s ease; }
+.side-tiles { transform: translateX(calc(100% + 16px)); transition: transform .25s ease; touch-action: pan-y; }
 .side-tiles.open { transform: none; }
 #tileEdge {
   position: fixed; z-index: 999; right: 0; width: 26px;
@@ -252,7 +252,8 @@ button:disabled { opacity: .5; }
 }
 #tileEdge.hidden { display: none; }
 /* Kacheln oben (Statistik): versteckt, per Wischen vom oberen Rand einblenden */
-.top-tiles { transform: translateY(calc(-100% - 24px - env(safe-area-inset-top))); transition: transform .25s ease; }
+/* touch-action: none → Android bricht die Wischgeste nicht ab (sonst pointercancel) */
+.top-tiles { transform: translateY(calc(-100% - 24px - env(safe-area-inset-top))); transition: transform .25s ease; touch-action: none; }
 .top-tiles.open { transform: none; }
 #statsEdge {
   position: fixed; z-index: 999; top: 0; left: 0; right: 0; height: calc(30px + env(safe-area-inset-top));
