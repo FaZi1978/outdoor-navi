@@ -132,8 +132,9 @@
     panX = Math.max(-mx, Math.min(mx, panX)); panY = Math.max(-my, Math.min(my, panY));
   }
 
-  async function openViewer(id) {
+  async function openViewer(id, onlyIds) {
     vList = (await dbAll()).sort((a, b) => (a.taken || 0) - (b.taken || 0));
+    if (onlyIds) vList = vList.filter((x) => onlyIds.includes(x.id));
     vIdx = Math.max(0, vList.findIndex((x) => x.id === id));
     map.closePopup();
     viewer.hidden = false;
@@ -228,6 +229,9 @@
   vStage.addEventListener('pointerup', endPointer);
   vStage.addEventListener('pointercancel', endPointer);
   window.addEventListener('resize', () => { if (!viewer.hidden) { clampPan(); applyTransform(false); } });
+
+  // Für die Tourenübersicht (tours.js)
+  window.photoStore = { all: dbAll, openViewer };
 
   /* ---------- Bild verkleinern ---------- */
   async function resize(file, maxPx, quality) {
