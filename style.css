@@ -296,6 +296,17 @@ button:disabled { opacity: .5; }
 #kcalTile b { font-size: 18px; }
 #kcalTile small { font-size: 11px; color: #5f6b62; }
 
+/* Info-Fenster Schutz- und Sperrgebiete */
+.area-pop .leaflet-popup-content { margin: 10px 12px; font-size: 13px; line-height: 1.35; }
+.ai-item + .ai-item { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e6e2; }
+.ai-kind { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #5f6b62; display: flex; align-items: center; gap: 6px; }
+.ai-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.ai-item b { display: block; font-size: 15px; margin-top: 2px; }
+.ai-item small { display: block; color: #5f6b62; }
+.ai-zone { font-weight: 600; color: #6b2ba0; margin-top: 2px; }
+.ai-item p { margin: 6px 0 4px; }
+.ai-load { font-style: italic; }
+
 /* Taschenmodus */
 #pocket {
   position: fixed; inset: 0; z-index: 9999; background: #000; color: #555;
