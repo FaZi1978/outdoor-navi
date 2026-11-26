@@ -20,15 +20,15 @@
     mtb: 'Mountainbike'
   };
 
-  let profile = null;   // { height, weight, sex: 'm'|'w'|'d', age, activity }
+  let profile = null;   // { height, weight, sex: 'm'|'w', age, activity }
   try { profile = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
-  const valid = (p) => p && p.height >= 100 && p.height <= 250 && p.weight >= 25 && p.weight <= 300 && p.sex;
+  const valid = (p) => p && p.height >= 100 && p.height <= 250 && p.weight >= 25 && p.weight <= 300 && (p.sex === 'm' || p.sex === 'w');
 
   /* ---------- Berechnung ---------- */
   // Grundumsatz in kcal pro Tag (Mifflin-St Jeor); ohne Alter: 40 Jahre angenommen
   function bmr(p) {
     const base = 10 * p.weight + 6.25 * p.height - 5 * (p.age || 40);
-    return p.sex === 'm' ? base + 5 : p.sex === 'w' ? base - 161 : base - 78;
+    return p.sex === 'm' ? base + 5 : base - 161;
   }
 
   // Belastung in MET für Geschwindigkeit (km/h) und Steigung (0,05 = 5 %)
