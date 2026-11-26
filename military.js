@@ -14,6 +14,7 @@
 
   // Platzhalter, damit die Ebene sofort in der Ebenen-Auswahl steht
   const group = L.layerGroup().addTo(map);
+  window.militaryGroup = group;
   if (window.layerControl) layerControl.addOverlay(group, '<span class="swatch" style="color:#000"></span>Militärische Sperrgebiete');
 
   fetch(TILEJSON)
@@ -34,6 +35,7 @@
         attribution: 'Sperrgebiete: © <a href="https://openfreemap.org">OpenFreeMap</a>, © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       });
       group.addLayer(layer);
+      window.militaryLayer = layer;   // für die Treffer-Prüfung beim Antippen (areas.js)
       window.militaryTiles = { url: tj.tiles[0], tilejson: TILEJSON, minZoom: 9, maxZoom: 14 };
     })
     .catch(() => toast('Militärische Sperrgebiete konnten nicht geladen werden (offline?)'));
