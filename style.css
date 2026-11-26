@@ -239,6 +239,30 @@ button:disabled { opacity: .5; }
   padding: 6px 0; border-bottom: 1px solid rgba(127,127,127,.2); font-variant-numeric: tabular-nums;
 }
 .wx-t { white-space: nowrap; }
+/* Taschenmodus */
+#pocket {
+  position: fixed; inset: 0; z-index: 9999; background: #000; color: #555;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+#pocket[hidden] { display: none; }
+#pkInfo { text-align: center; transition: transform 2s; font-variant-numeric: tabular-nums; }
+.pk-big b { font-size: 64px; font-weight: 700; }
+.pk-big small, .pk-row small { font-size: 18px; }
+.pk-row { font-size: 26px; margin-top: 6px; }
+#pkGps { margin-top: 14px; font-size: 15px; }
+#pkGps.warn { color: #8a5a00; }
+#pkUnlock {
+  position: absolute; bottom: calc(40px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
+  background: #111; color: #666; border: 1px solid #222; border-radius: 30px; padding: 14px 22px; font-size: 15px;
+  white-space: nowrap; overflow: hidden; touch-action: none;
+}
+#pkUnlock::before {
+  content: ''; position: absolute; inset: 0; width: 0; background: #1d3a26; z-index: -1;
+}
+#pkUnlock { isolation: isolate; }
+#pkUnlock.holding::before { width: 100%; transition: width 1.5s linear; }
+
 /* Wetterradar */
 #radarBar {
   position: fixed; z-index: 1001; left: 8px; right: 8px; bottom: calc(92px + env(safe-area-inset-bottom));
