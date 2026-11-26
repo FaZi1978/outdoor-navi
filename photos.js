@@ -334,8 +334,6 @@
   el('photoPlaceHere').onclick = () => { if (lastFix) placeNext(lastFix.p[0], lastFix.p[1], 'gps'); };
   el('photoPlaceSkip').onclick = () => { placing.shift(); askPlacement(); };
 
-  el('photoInput').onchange = (e) => { el('menu').hidden = true; importFiles([...e.target.files], false); e.target.value = ''; };
-  el('cameraInput').onchange = (e) => { el('menu').hidden = true; importFiles([...e.target.files], true); e.target.value = ''; };
 
   /* ---------- Kamera-Kachel auf der Karte (zwischen Karten- und Legenden-Kachel) ---------- */
   const CamButton = L.Control.extend({
