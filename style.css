@@ -215,7 +215,6 @@ button:disabled { opacity: .5; }
 #weather h3 { margin: 14px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 #weather .hint a { color: inherit; }
 #weather > .pl-head { margin-bottom: 6px; }
-#wxMapBtn { width: 100%; margin-top: 12px; }
 .wx-now { display: flex; align-items: center; gap: 14px; padding: 4px 0 8px; }
 .wx-big { font-size: 40px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .wx-big b { font-size: 42px; font-variant-numeric: tabular-nums; }
@@ -263,22 +262,6 @@ button:disabled { opacity: .5; }
 #pkUnlock { isolation: isolate; }
 #pkUnlock.holding::before { width: 100%; transition: width 1.5s linear; }
 
-/* Wetterradar */
-#radarBar {
-  position: fixed; z-index: 1001; left: 8px; right: 8px; bottom: calc(92px + env(safe-area-inset-bottom));
-  max-width: 480px; margin: 0 auto; padding: 6px 8px; display: flex; align-items: center; gap: 8px;
-  background: var(--bg); border-radius: 14px; box-shadow: var(--shadow); backdrop-filter: blur(6px);
-}
-#radarBar[hidden] { display: none; }
-#radarBar .rb-mid { flex: 1; min-width: 0; }
-#radarTime { font-size: 13px; text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
-#radarTime .fc { color: #c26a00; font-weight: 700; }
-#radarSlider { width: 100%; margin: 2px 0 0; }
-#radarNow { flex: none; padding: 6px 10px; font-size: 13px; }
-.radar-ramp {
-  display: inline-block; width: 44px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,.2);
-  background: linear-gradient(90deg, #00ffff, #00cc99, #009933, #66cc00, #cccc00, #ffcc00, #ff8000, #ff0000, #cc0066, #6600cc, #0000ff);
-}
 
 /* Offline-Karten */
 #offline {
