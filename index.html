@@ -73,8 +73,6 @@
   </nav>
 
   <div id="menu" hidden>
-    <label class="filebtn primary">📷 Foto aufnehmen<input type="file" id="cameraInput" accept="image/*" capture="environment" hidden></label>
-    <label class="filebtn">🖼 Fotos mit GPS hinzufügen<input type="file" id="photoInput" accept="image/*,.heic,.heif" multiple hidden></label>
     <button id="btnPocket" class="primary">🌙 Taschenmodus (GPS läuft weiter)</button>
     <button id="btnTours" class="primary">📚 Meine Touren</button>
     <button id="btnOffline">⬇ Offline-Karten</button>
@@ -84,7 +82,7 @@
     <button id="btnResetAll" class="danger">Σ alle Touren zurücksetzen</button>
     <p class="hint">Tipp: Lange auf die Karte drücken (oder Rechtsklick), um ein Navigationsziel zu setzen.</p>
     <button id="btnUpdate">🔄 App aktualisieren</button>
-    <p class="hint" id="appVersion">Version 28</p>
+    <p class="hint" id="appVersion">Version 29</p>
   </div>
 
   <!-- Routenplaner -->
@@ -228,6 +226,7 @@
   <script src="legend.js"></script>
   <script src="weather.js"></script>
   <script src="pocket.js"></script>
+  <script src="tiles.js"></script>
   <script src="offline.js"></script>
   <script src="pressure.js"></script>
   <script src="tours.js"></script>
