@@ -54,6 +54,8 @@ button, .filebtn {
 }
 button[hidden] { display: none; }
 button.primary { background: var(--green); color: #fff; }
+label[hidden] { display: none; }
+.cam-btn { flex: 0 0 52px; padding: 12px 0; font-size: 20px; background: #f2b84b; color: #1d241f; }
 button.danger { background: var(--red); color: #fff; }
 button.icon { flex: 0 0 52px; padding: 12px 0; font-size: 20px; }
 button:active { filter: brightness(.9); }
@@ -261,7 +263,8 @@ progress[hidden] { display: none; }
 #toursBody h4 { margin: 4px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 .t-photos { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
 .t-photos img { flex: 0 0 64px; width: 64px; height: 64px; object-fit: cover; border-radius: 8px; cursor: pointer; }
-#toursBody > button.danger { flex: none; font-size: 14px; }
+#toursBody > button.danger { flex: none; font-size: 14px; width: 100%; }
+.t-addphotos { display: block; font-size: 14px; padding: 10px; }
 .t-full { position: fixed; inset: 0; z-index: 2000; background: #000; display: flex; align-items: center; justify-content: center; }
 .t-full img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
