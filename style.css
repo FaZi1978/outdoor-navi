@@ -170,7 +170,7 @@ button:disabled { opacity: .5; }
 }
 #legend[hidden] { display: none; }
 #legendSearch { width: 100%; }
-#legendBody { overflow-y: auto; flex: 1; padding-right: 2px; }
+#legendBody { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-right: 2px; }
 #legendBody h3 {
   margin: 14px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
 }
@@ -226,7 +226,10 @@ progress[hidden] { display: none; }
 }
 #tours[hidden] { display: none; }
 #tours .pl-head button[hidden] { display: none; }
-#toursBody { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+/* Block statt Flex + min-height: 0 – sonst staucht/verzerrt Safari (iPhone) Inhalte, statt zu scrollen */
+#toursBody { overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1 1 auto; min-height: 0; display: block; }
+#toursBody > * { margin-top: 0; margin-bottom: 8px; }
+#toursBody > *:last-child { margin-bottom: 0; }
 .t-sum { margin: 0; font-size: 13px; color: var(--muted); }
 .t-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .t-list li {
@@ -234,21 +237,21 @@ progress[hidden] { display: none; }
   background: rgba(127,127,127,.08);
 }
 .t-list li:active { background: rgba(127,127,127,.2); }
-.t-list img, .t-noimg { flex: 0 0 96px; width: 96px; height: 62px; object-fit: cover; border-radius: 8px; background: #ddd; }
+.t-list img, .t-noimg { flex: 0 0 96px; width: 96px; height: 62px; min-width: 96px; object-fit: cover; border-radius: 8px; background: #ddd; }
 .t-noimg { display: flex; align-items: center; justify-content: center; font-size: 26px; }
-.t-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.t-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
 .t-txt b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .t-txt small { font-size: 12px; color: var(--muted); }
 .t-txt span { font-size: 13px; font-variant-numeric: tabular-nums; }
 .t-name { display: flex; align-items: center; gap: 8px; }
 .t-name b { flex: 1; font-size: 17px; }
 .t-date { margin: 0; font-size: 13px; color: var(--muted); }
-.t-image { width: 100%; border-radius: 10px; cursor: zoom-in; display: block; }
+.t-image { width: 100%; height: auto; aspect-ratio: 800 / 520; object-fit: cover; border-radius: 10px; cursor: zoom-in; display: block; background: #e8eae2; }
 .t-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .t-stats div { background: rgba(127,127,127,.08); border-radius: 8px; padding: 6px 8px; display: flex; flex-direction: column; }
 .t-stats span { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
 .t-stats b { font-size: 16px; font-variant-numeric: tabular-nums; }
-#tProfile { width: 100%; height: 80px; }
+#tProfile { width: 100%; height: 80px; display: block; }
 #tProfile[hidden] { display: none; }
 #toursBody h4 { margin: 4px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 .t-photos { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
