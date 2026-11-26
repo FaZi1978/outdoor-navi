@@ -187,6 +187,27 @@ progress[hidden] { display: none; }
 .net-off { color: var(--red) !important; font-weight: 700; }
 .net-off[hidden] { display: none; }
 
+/* Luftdruck */
+.press { cursor: pointer; border-bottom: 1px dotted currentColor; }
+.press.stale b { color: var(--muted); }
+#pressTrend { font-weight: 700; }
+.p-up { color: #1a7f37; }
+.p-down { color: #b26a00; }
+.p-warn { color: var(--red); }
+#pressInfo {
+  position: fixed; z-index: 1002; left: 8px; right: 8px; top: calc(150px + env(safe-area-inset-top));
+  max-width: 420px; margin: 0 auto; padding: 10px 12px; background: var(--bg); border-radius: 14px;
+  box-shadow: var(--shadow); backdrop-filter: blur(6px); font-size: 14px;
+}
+#pressInfo[hidden] { display: none; }
+.pi-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; font-size: 16px; }
+.pi-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(127,127,127,.2); }
+.pi-row small { color: var(--muted); }
+.pi-row b { font-size: 16px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pi-text { margin: 8px 0 4px; font-weight: 600; }
+#pressInfo .hint { margin: 4px 0 0; }
+#pressInfo .hint a { color: inherit; }
+
 #toast {
   position: fixed; z-index: 1002; left: 50%; bottom: 150px; transform: translateX(-50%);
   background: rgba(0,0,0,.8); color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 14px;
