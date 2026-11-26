@@ -278,6 +278,7 @@ function render() {
   $('btnStart').textContent = state.paused ? '▶ Weiter' : '▶ Start';
   $('btnPause').hidden = !state.running || state.paused;
   $('btnStop').hidden = !state.running;
+  $('btnTourCam').hidden = !state.running;   // Kamera-Knopf nur während einer Tour
 }
 setInterval(render, 1000);
 
