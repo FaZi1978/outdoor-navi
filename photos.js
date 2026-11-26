@@ -338,6 +338,20 @@
   el('cameraInput').onchange = (e) => { el('menu').hidden = true; importFiles([...e.target.files], true); e.target.value = ''; };
   el('tourCamInput').onchange = (e) => { importFiles([...e.target.files], true); e.target.value = ''; };
 
+  /* ---------- Kamera-Kachel auf der Karte (zwischen Karten- und Legenden-Kachel) ---------- */
+  const CamButton = L.Control.extend({
+    options: { position: 'topright' },
+    onAdd() {
+      const b = L.DomUtil.create('label', 'legend-btn photo-btn');
+      b.title = 'Foto aufnehmen';
+      b.innerHTML = '📷<input type="file" accept="image/*" capture="environment" hidden>';
+      L.DomEvent.disableClickPropagation(b);
+      b.querySelector('input').onchange = (e) => { importFiles([...e.target.files], true); e.target.value = ''; };
+      return b;
+    }
+  });
+  new CamButton().addTo(map);
+
   /* ---------- Start: gespeicherte Fotos laden ---------- */
   dbAll().then((list) => list.forEach(addMarker)).catch((e) => console.error('Fotos laden', e));
 })();
