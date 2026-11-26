@@ -55,7 +55,6 @@ button, .filebtn {
 button[hidden] { display: none; }
 button.primary { background: var(--green); color: #fff; }
 label[hidden] { display: none; }
-.cam-btn { flex: 0 0 52px; padding: 12px 0; font-size: 20px; background: #f2b84b; color: #1d241f; }
 button.danger { background: var(--red); color: #fff; }
 button.icon { flex: 0 0 52px; padding: 12px 0; font-size: 20px; }
 button:active { filter: brightness(.9); }
