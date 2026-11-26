@@ -123,5 +123,4 @@
     if (v) { document.getElementById('menu').hidden = true; }
   }
   document.getElementById('legendClose').onclick = () => toggle(false);
-  document.getElementById('btnLegend').onclick = () => toggle(true);
 })();
