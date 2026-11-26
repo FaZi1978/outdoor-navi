@@ -148,12 +148,67 @@ const DIRS = ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'];
 const fmtKm = (m, d = 2) => (m / 1000).toFixed(d).replace('.', ',');
 const fmtDist = (m) => m < 1000 ? Math.round(m) + ' m' : fmtKm(m, m < 10000 ? 2 : 1) + ' km';
 
+/* ---------- Höhe ----------
+   Browser liefern die GPS-Höhe je nach Gerät über dem Ellipsoid (Android: in Deutschland
+   ca. 45–50 m zu hoch) oder über dem Meer (iPhone) – und mit ±10–30 m Messfehler.
+   Lösung: Online gilt die Geländehöhe aus dem Copernicus-Höhenmodell (Open-Meteo).
+   Dabei lernt die App die Abweichung des Handys (GPS − Gelände) und korrigiert damit
+   die GPS-Höhe auch offline. */
+const ELEV_KEY = 'outdoorNavi.elev.v1';
+const elev = { samples: [], dem: null, smooth: null };   // dem: { lat, lng, h, t }
+try { elev.samples = JSON.parse(localStorage.getItem(ELEV_KEY)) || []; } catch (e) {}
+let elevBusy = false;
+function elevOffset() {
+  if (elev.samples.length < 2) return null;
+  const s = elev.samples.slice().sort((a, b) => a - b);
+  return s[Math.floor(s.length / 2)];   // Median = robust gegen Ausreißer
+}
+// GPS-Höhe (roh) -> Höhe über dem Meeresspiegel
+function correctAlt(raw) {
+  if (raw == null || isNaN(raw)) return null;
+  const off = elevOffset();
+  return off == null ? raw : raw - off;
+}
+async function lookupTerrain(lat, lng, rawAlt, altAcc) {
+  if (elevBusy || !navigator.onLine) return;
+  const d = elev.dem;
+  if (d && haversine([d.lat, d.lng], [lat, lng]) < 40 && Date.now() - d.t < 5 * 60000) return;
+  elevBusy = true;
+  try {
+    const j = await (await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat.toFixed(5)}&longitude=${lng.toFixed(5)}`)).json();
+    const h = j.elevation && j.elevation[0];
+    if (h != null && isFinite(h)) {
+      elev.dem = { lat, lng, h, t: Date.now() };
+      // Abweichung nur aus guten Messungen lernen
+      if (rawAlt != null && (altAcc == null || altAcc <= 25)) {
+        elev.samples.push(Math.round((rawAlt - h) * 10) / 10);
+        if (elev.samples.length > 25) elev.samples.shift();
+        try { localStorage.setItem(ELEV_KEY, JSON.stringify(elev.samples)); } catch (e) {}
+      }
+      render();
+    }
+  } catch (e) { /* offline / Fehler: GPS-Höhe verwenden */ }
+  elevBusy = false;
+}
+// Angezeigte Höhe: Gelände (online, in der Nähe) – sonst korrigierte, geglättete GPS-Höhe
+function currentAltitude() {
+  if (!lastFix) return null;
+  const d = elev.dem;
+  if (d && haversine([d.lat, d.lng], lastFix.p) < 60 && Date.now() - d.t < 10 * 60000) return { h: d.h, src: 'dem' };
+  if (elev.smooth != null) return { h: elev.smooth, src: elevOffset() != null ? 'gps' : 'raw' };
+  return null;
+}
+window.currentAltitude = currentAltitude;
+
 /* ---------- GPS ---------- */
 function onPosition(pos) {
   const c = pos.coords;
-  const p = [c.latitude, c.longitude, c.altitude, pos.timestamp];
+  const alt = correctAlt(c.altitude);
+  const p = [c.latitude, c.longitude, alt != null ? Math.round(alt * 10) / 10 : null, pos.timestamp];
   const prev = lastFix;
-  lastFix = { p, acc: c.accuracy, speed: c.speed, t: pos.timestamp };
+  lastFix = { p, acc: c.accuracy, speed: c.speed, t: pos.timestamp, rawAlt: c.altitude };
+  if (alt != null) elev.smooth = elev.smooth == null ? alt : elev.smooth + 0.25 * (alt - elev.smooth);
+  if (c.accuracy <= 30) lookupTerrain(c.latitude, c.longitude, c.altitude, c.altitudeAccuracy);
 
   // Momentangeschwindigkeit: GPS-Wert bevorzugen, sonst aus letzter Strecke berechnen
   let speed = (c.speed != null && !isNaN(c.speed)) ? c.speed : null;
@@ -168,9 +223,12 @@ function onPosition(pos) {
   if (follow) map.panTo([p[0], p[1]], { animate: true });
 
   if (state.running && !state.paused && c.accuracy <= MAX_ACCURACY_M) {
+    // Höchstgeschwindigkeit (unplausible GPS-Sprünge über 150 km/h ignorieren)
+    if (lastFix.speedCalc > (state.maxSpeed || 0) && lastFix.speedCalc < 42) state.maxSpeed = lastFix.speedCalc;
     const last = state.points[state.points.length - 1];
     if (!last || state.gapNext) {
-      // nach Pause: Strecke während der Pause nicht mitzählen
+      // nach Pause: Strecke während der Pause nicht mitzählen; 5. Feld = Beginn eines neuen Abschnitts
+      if (last) p.push(1);
       state.gapNext = false;
       state.points.push(p); trackLine.addLatLng([p[0], p[1]]);
     } else {
@@ -210,7 +268,10 @@ function render() {
   const s = Math.floor(ms / 1000);
   $('time').textContent = [s / 3600, (s % 3600) / 60, s % 60].map((v) => String(Math.floor(v)).padStart(2, '0')).join(':');
   if (lastFix) {
-    $('alt').textContent = lastFix.p[2] != null ? Math.round(lastFix.p[2]) : '–';
+    const a = currentAltitude();
+    // „≈“ = GPS-Höhe noch ohne Abgleich mit dem Höhenmodell (ungenau)
+    $('alt').textContent = a ? (a.src === 'raw' ? '≈' : '') + Math.round(a.h) : '–';
+    $('alt').title = a ? { dem: 'Geländehöhe (Höhenmodell)', gps: 'GPS-Höhe, korrigiert', raw: 'GPS-Höhe, noch nicht abgeglichen' }[a.src] : '';
     $('gpsAcc').textContent = '±' + Math.round(lastFix.acc) + ' m';
   }
   $('btnStart').hidden = state.running && !state.paused;
@@ -223,8 +284,10 @@ setInterval(render, 1000);
 /* ---------- Aufzeichnung ---------- */
 $('btnStart').onclick = () => {
   if (!state.running) {
+    // Vorherige Tour sichern, falls das noch nicht passiert ist
+    if (state.points.length >= 2 && !state.savedId && window.saveTour) saveTour(JSON.parse(JSON.stringify(state)));
     const keepAll = state.allTime;
-    state = { running: true, paused: false, points: [], distance: 0, activeMs: 0, resumedAt: Date.now(), allTime: keepAll };
+    state = { running: true, paused: false, points: [], distance: 0, activeMs: 0, maxSpeed: 0, startedAt: Date.now(), resumedAt: Date.now(), allTime: keepAll };
     trackLine.setLatLngs([]);
     toast('Aufzeichnung gestartet');
   } else {
@@ -240,8 +303,14 @@ $('btnPause').onclick = () => {
 $('btnStop').onclick = () => {
   if (!confirm('Tour beenden? Die Werte bleiben angezeigt, bis du eine neue Tour startest.')) return;
   state.activeMs = activeMs(); state.running = false; state.paused = false; state.resumedAt = null;
+  state.endedAt = Date.now();
   releaseWakeLock(); save(); render();
-  toast('Tour beendet: ' + fmtDist(state.distance));
+  if (state.points.length >= 2 && window.saveTour) {
+    toast('Tour beendet: ' + fmtDist(state.distance) + ' – wird gespeichert…');
+    saveTour(state).then((id) => { if (id) { state.savedId = id; save(); toast('Tour gespeichert – siehe ☰ → Meine Touren'); } });
+  } else {
+    toast('Tour beendet: ' + fmtDist(state.distance) + ' (zu kurz zum Speichern)');
+  }
 };
 
 /* Bildschirm während der Aufzeichnung wach halten */
