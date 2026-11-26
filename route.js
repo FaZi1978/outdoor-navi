@@ -46,6 +46,7 @@
   /* ---------- Panel ---------- */
   function setOpen(v) {
     open = v;
+    window.plannerOpen = v;   // andere Module: Kartentipps gehören dann dem Routenplaner
     el('planner').hidden = !v;
     el('menu').hidden = true;
     el('btnPlan').classList.toggle('primary', v);
