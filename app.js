@@ -419,5 +419,17 @@ if (state.running && !state.paused) { state.resumedAt = state.resumedAt || Date.
 render();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  // updateViaCache 'none': sw.js selbst immer frisch prüfen
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+    .then((reg) => reg.update()).catch(() => {});
+  // Neue Version installiert -> Seite einmal neu laden, damit sie sofort sichtbar ist
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloaded) return;
+    // Während einer Aufzeichnung nicht stören – neue Version kommt beim nächsten Öffnen
+    if (state.running) return;
+    reloaded = true;
+    location.reload();
+  });
 }
