@@ -75,6 +75,7 @@
   <div id="menu" hidden>
     <label class="filebtn primary">📷 Foto aufnehmen<input type="file" id="cameraInput" accept="image/*" capture="environment" hidden></label>
     <label class="filebtn">🖼 Fotos mit GPS hinzufügen<input type="file" id="photoInput" accept="image/*,.heic,.heif" multiple hidden></label>
+    <button id="btnPocket" class="primary">🌙 Taschenmodus (GPS läuft weiter)</button>
     <button id="btnTours" class="primary">📚 Meine Touren</button>
     <button id="btnOffline">⬇ Offline-Karten</button>
     <button id="btnLegend">ⓘ Kartenlegende</button>
@@ -84,7 +85,7 @@
     <button id="btnResetAll" class="danger">Σ alle Touren zurücksetzen</button>
     <p class="hint">Tipp: Lange auf die Karte drücken (oder Rechtsklick), um ein Navigationsziel zu setzen.</p>
     <button id="btnUpdate">🔄 App aktualisieren</button>
-    <p class="hint" id="appVersion">Version 25</p>
+    <p class="hint" id="appVersion">Version 26</p>
   </div>
 
   <!-- Routenplaner -->
@@ -178,6 +179,16 @@
   </section>
 
   <!-- Kartenlegende -->
+  <!-- Taschenmodus: schwarzer Sperrbildschirm, GPS läuft weiter -->
+  <div id="pocket" hidden>
+    <div id="pkInfo">
+      <div class="pk-big"><b id="pkSpeed">0,0</b> <small>km/h</small></div>
+      <div class="pk-row"><b id="pkDist">0,00</b> <small>km</small> · <b id="pkTime">00:00:00</b></div>
+      <div id="pkGps">GPS</div>
+    </div>
+    <button id="pkUnlock" type="button"><span>🔒</span> Zum Entsperren gedrückt halten</button>
+  </div>
+
   <!-- Zeitleiste des Wetterradars -->
   <div id="radarBar" hidden>
     <button id="radarPlay" class="icon small" title="Anhalten">⏸</button>
@@ -227,6 +238,7 @@
   <!-- <script src="huts.js"></script> -->
   <script src="legend.js"></script>
   <script src="weather.js"></script>
+  <script src="pocket.js"></script>
   <script src="offline.js"></script>
   <script src="pressure.js"></script>
   <script src="tours.js"></script>
