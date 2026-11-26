@@ -1,7 +1,7 @@
 // Service Worker: macht die App offline nutzbar
 // - App-Dateien + Bibliotheken: sofort aus dem Cache, im Hintergrund aktualisieren
 // - Kartenkacheln: Cache zuerst (auch die per „Offline-Karten“ geladenen), sonst Netz
-const APP_CACHE = 'outdoor-app-v19';
+const APP_CACHE = 'outdoor-app-v20';
 const TILE_CACHE = 'outdoor-tiles-v2';     // muss zu offline.js passen
 const LEAFLET = 'https://unpkg.com/leaflet@1.9.4/dist/';
 const APP_FILES = [
@@ -18,7 +18,8 @@ const APP_FILES = [
 self.addEventListener('install', (e) => {
   // Einzeln laden, damit eine nicht erreichbare Datei nicht die ganze Installation scheitern lässt
   e.waitUntil(caches.open(APP_CACHE)
-    .then((c) => Promise.all(APP_FILES.map((u) => c.add(u).catch(() => {}))))
+    // cache: 'reload' = am Browser-Cache vorbei direkt vom Server (sonst landen alte Dateien im neuen Cache)
+    .then((c) => Promise.all(APP_FILES.map((u) => c.add(new Request(u, { cache: 'reload' })).catch(() => {}))))
     .then(() => self.skipWaiting()));
 });
 
@@ -58,7 +59,9 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(caches.open(APP_CACHE).then(async (c) => {
       const key = e.request.mode === 'navigate' ? './index.html' : e.request;
       const hit = await c.match(key, { ignoreSearch: e.request.mode === 'navigate' });
-      const net = fetch(e.request).then((res) => {
+      // Eigene Dateien beim Server nachfragen (no-cache), nicht aus dem Browser-Cache
+      const req = url.origin === self.location.origin ? fetch(url.href, { cache: 'no-cache' }) : fetch(e.request);
+      const net = req.then((res) => {
         if (res.ok) c.put(e.request.mode === 'navigate' ? './index.html' : e.request, res.clone());
         return res;
       }).catch(() => hit);
