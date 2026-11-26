@@ -184,9 +184,19 @@
   const blobUrl = (b) => { const u = URL.createObjectURL(b); objUrls.push(u); return u; };
   function freeUrls() { while (objUrls.length) URL.revokeObjectURL(objUrls.pop()); }
 
+  // Fotos einer Tour: fest verknüpfte (tourId) + alle, die während der Tour aufgenommen wurden
+  const belongs = (p, t) => p.tourId === t.id || (!p.tourId && p.taken && p.taken >= t.start - 60000 && p.taken <= t.end + 60000);
+  async function tourPhotos(t) {
+    try { return (await photoStore.all()).filter((p) => belongs(p, t)).sort((a, b) => (a.taken || 0) - (b.taken || 0)); }
+    catch (e) { return []; }
+  }
+
   async function renderList() {
     freeUrls();
     const tours = (await allTours()).sort((a, b) => b.start - a.start);
+    let allPhotos = [];
+    try { allPhotos = await photoStore.all(); } catch (e) {}
+    const photoCount = (t) => allPhotos.filter((p) => belongs(p, t)).length;
     const total = tours.reduce((s, t) => s + t.stats.distance, 0);
     el('toursBody').innerHTML = `
       <p class="t-sum">${tours.length} Tour${tours.length === 1 ? '' : 'en'} · zusammen ${fmtKm(total, 1)} km</p>
@@ -197,7 +207,7 @@
           <div class="t-txt">
             <b>${esc(t.name)}</b>
             <small>${dateStr(t.start)}, ${timeStr(t.start)} Uhr</small>
-            <span>${fmtKm(t.stats.distance)} km · ${dur(t.stats.activeMs)} · Ø ${kmh(t.stats.avg)}</span>
+            <span>${fmtKm(t.stats.distance)} km · ${dur(t.stats.activeMs)} · Ø ${kmh(t.stats.avg)}${photoCount(t) ? ` · 📷 ${photoCount(t)}` : ''}</span>
           </div>
           <button class="t-del" title="Tour löschen" aria-label="Tour löschen">🗑</button>
         </li>`).join('')}</ul>`;
@@ -232,9 +242,7 @@
     if (!t) return renderList();
     freeUrls();
     const s = t.stats;
-    // Fotos, die während der Tour aufgenommen wurden
-    let photos = [];
-    try { photos = (await photoStore.all()).filter((p) => p.taken && p.taken >= t.start - 60000 && p.taken <= t.end + 60000); } catch (e) {}
+    const photos = await tourPhotos(t);
     const imgUrl = t.image ? blobUrl(t.image) : null;
     el('toursTitle').textContent = 'Tour';
     el('toursBack').hidden = false;
@@ -253,7 +261,9 @@
         <div><span>Höhe min / max</span><b>${s.minEle != null ? s.minEle + ' / ' + s.maxEle + ' m' : '–'}</b></div>
       </div>
       <canvas id="tProfile" height="80"></canvas>
-      ${photos.length ? `<h4>Fotos dieser Tour (${photos.length})</h4><div class="t-photos">${photos.map((p) => `<img data-pid="${p.id}" src="${blobUrl(p.thumb)}" alt="">`).join('')}</div>` : ''}
+      <h4>Fotos dieser Tour (${photos.length})</h4>
+      ${photos.length ? `<div class="t-photos">${photos.map((p) => `<img data-pid="${p.id}" src="${blobUrl(p.thumb)}" alt="">`).join('')}</div>` : '<p class="hint">Noch keine Fotos. Während der Aufzeichnung mit 📷 fotografieren – oder hier nachträglich hinzufügen.</p>'}
+      <label class="filebtn t-addphotos">＋ Fotos zu dieser Tour hinzufügen<input type="file" id="tPhotoInput" accept="image/*,.heic,.heif" multiple hidden></label>
       <div class="pl-buttons">
         <button id="tShow" class="primary">${shownId === t.id ? 'Von Karte entfernen' : '🗺 Auf Karte zeigen'}</button>
         <button id="tGpx">GPX</button>
@@ -268,6 +278,15 @@
       const img = el('tImage');
       if (fixed && img) img.src = blobUrl(fixed.image);
     });
+    // Fotos nachträglich hinzufügen: fest mit dieser Tour verknüpft; ohne GPS wird der Ort
+    // aus der Tourstrecke zur Aufnahmezeit bestimmt
+    el('tPhotoInput').onchange = async (e) => {
+      const files = [...e.target.files]; e.target.value = '';
+      if (!files.length) return;
+      toast('Fotos werden gespeichert…');
+      await photoStore.import(files, false, { tourId: t.id, track: t.points });
+      openDetail(t.id);
+    };
     el('toursBody').querySelectorAll('.t-photos img').forEach((img) => {
       img.onclick = () => photoStore.openViewer(img.dataset.pid, photos.map((p) => p.id));
     });
