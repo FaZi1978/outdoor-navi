@@ -84,7 +84,7 @@
     <button id="btnResetAll" class="danger">Σ alle Touren zurücksetzen</button>
     <p class="hint">Tipp: Lange auf die Karte drücken (oder Rechtsklick), um ein Navigationsziel zu setzen.</p>
     <button id="btnUpdate">🔄 App aktualisieren</button>
-    <p class="hint" id="appVersion">Version 23</p>
+    <p class="hint" id="appVersion">Version 24</p>
   </div>
 
   <!-- Routenplaner -->
@@ -178,6 +178,14 @@
   </section>
 
   <!-- Kartenlegende -->
+  <section id="weather" hidden>
+    <div class="pl-head">
+      <b>⛅ Wetter</b>
+      <button id="weatherClose" class="icon small" title="Wetter schließen">✕</button>
+    </div>
+    <div id="weatherBody"></div>
+  </section>
+
   <section id="legend" hidden>
     <div class="pl-head">
       <b>Legende</b>
@@ -208,6 +216,7 @@
   <!-- Schutzhuetten: wieder einkommentieren, sobald huts.json vorhanden ist -->
   <!-- <script src="huts.js"></script> -->
   <script src="legend.js"></script>
+  <script src="weather.js"></script>
   <script src="offline.js"></script>
   <script src="pressure.js"></script>
   <script src="tours.js"></script>
