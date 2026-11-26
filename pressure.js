@@ -62,7 +62,8 @@
 
   function localPressure() {
     // Mit GPS-Höhe genauer als die Modellhöhe des Wetterdienstes
-    if (lastFix && lastFix.p[2] != null && data) return { val: pressureAt(data.surface, data.elevation, lastFix.p[2]), src: 'GPS-Höhe ' + Math.round(lastFix.p[2]) + ' m' };
+    const a = window.currentAltitude && currentAltitude();
+    if (a && data) return { val: pressureAt(data.surface, data.elevation, a.h), src: (a.src === 'dem' ? 'Geländehöhe ' : 'GPS-Höhe ') + Math.round(a.h) + ' m' };
     if (data) return { val: data.surface, src: 'Geländehöhe ' + Math.round(data.elevation) + ' m' };
     return null;
   }
