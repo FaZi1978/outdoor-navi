@@ -199,8 +199,20 @@
             <small>${dateStr(t.start)}, ${timeStr(t.start)} Uhr</small>
             <span>${fmtKm(t.stats.distance)} km · ${dur(t.stats.activeMs)} · Ø ${kmh(t.stats.avg)}</span>
           </div>
+          <button class="t-del" title="Tour löschen" aria-label="Tour löschen">🗑</button>
         </li>`).join('')}</ul>`;
-    el('toursBody').querySelectorAll('.t-list li').forEach((li) => { li.onclick = () => openDetail(li.dataset.id); });
+    el('toursBody').querySelectorAll('.t-list li').forEach((li) => {
+      li.onclick = () => openDetail(li.dataset.id);
+      li.querySelector('.t-del').onclick = async (e) => {
+        e.stopPropagation();   // nicht die Detailansicht öffnen
+        const t = tours.find((x) => x.id === li.dataset.id);
+        if (!t || !confirm(`„${t.name}“ wirklich löschen? Das kann nicht rückgängig gemacht werden.`)) return;
+        if (shownId === t.id) hideOnMap();
+        await delTour(t.id);
+        toast('Tour gelöscht');
+        renderList();
+      };
+    });
     el('toursTitle').textContent = 'Meine Touren';
     el('toursBack').hidden = true;
     // Unvollständige Tourbilder nacheinander im Hintergrund nachbessern
