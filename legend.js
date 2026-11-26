@@ -16,6 +16,8 @@
     [area('#1a9e33'), 'Landschaftsschutzgebiet (LSG)'],
     [area('#8f33c7'), 'Biosphärenreservat'],
     ['<span class="swatch big solid" style="color:#000"></span>', 'Militärisches Sperrgebiet (ab Zoomstufe 9)'],
+    [`<span class="depth-ramp" style="background:linear-gradient(90deg,${(window.depthRamp || []).slice().reverse().map((r) => r[1]).join(',')})"></span>`,
+      'Gewässertiefe (Meere): hell = flach, dunkel = tief<br><small>2 · 5 · 10 · 20 · 30 · 50 · 100 · 500 m</small>'],
     ['<div class="pos-marker" style="margin:auto"></div>', 'Deine Position (Kreis = GPS-Genauigkeit)'],
     [line('#d6332a', 5), 'Aufgezeichneter Track'],
     [line('#1f6feb', 6, null, '#fff'), 'Geplante Route'],
