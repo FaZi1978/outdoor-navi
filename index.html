@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2f5d3a">
+  <title>Outdoor Navi</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Outdoor">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Farbfilter: färben die Schutzgebiets-Kacheln des BfN exakt in der gewünschten Farbe ein -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <filter id="f-nsg" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 0.86  0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 1 0"/></filter>
+    <filter id="f-lsg" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 0.10  0 0 0 0 0.62  0 0 0 0 0.20  0 0 0 1 0"/></filter>
+    <filter id="f-bio" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 0.56  0 0 0 0 0.20  0 0 0 0 0.78  0 0 0 1 0"/></filter>
+  </svg>
+
+  <!-- Statistik oben -->
+  <section id="stats">
+    <div class="tile">
+      <span class="label">Momentan</span>
+      <span class="value"><b id="speedNow">0.0</b><small>km/h</small></span>
+    </div>
+    <div class="tile">
+      <span class="label">Durchschnitt</span>
+      <span class="value"><b id="speedAvg">0.0</b><small>km/h</small></span>
+    </div>
+    <div class="tile">
+      <span class="label">Gesamt</span>
+      <span class="value"><b id="distTotal">0.00</b><small>km</small></span>
+    </div>
+    <div class="sub">
+      <span>⏱ <b id="time">00:00:00</b></span>
+      <span>⛰ <b id="alt">–</b> m</span>
+      <span>🎯 <b id="gpsAcc">–</b></span>
+      <span>Σ alle Touren: <b id="distAll">0.0</b> km</span>
+      <span id="netState" class="net-off" hidden>📴 Offline</span>
+    </div>
+  </section>
+
+  <!-- Navigationsziel -->
+  <section id="navBox" hidden>
+    <div class="arrow" id="navArrow">➤</div>
+    <div>
+      <div class="label">Zum Ziel</div>
+      <div><b id="navDist">–</b> · <span id="navDir">–</span></div>
+    </div>
+    <button id="navClear" class="icon" title="Ziel entfernen">✕</button>
+  </section>
+
+  <!-- Steuerung unten -->
+  <nav id="controls">
+    <button id="btnStart" class="primary">▶ Start</button>
+    <button id="btnPause" hidden>⏸ Pause</button>
+    <button id="btnStop" class="danger" hidden>■ Stopp</button>
+    <button id="btnPlan" class="icon" title="Routenplaner">🧭</button>
+    <button id="btnCenter" class="icon" title="Auf Position zentrieren">◎</button>
+    <button id="btnMenu" class="icon" title="Mehr">☰</button>
+  </nav>
+
+  <div id="menu" hidden>
+    <label class="filebtn primary">📷 Foto aufnehmen<input type="file" id="cameraInput" accept="image/*" capture="environment" hidden></label>
+    <label class="filebtn">🖼 Fotos mit GPS hinzufügen<input type="file" id="photoInput" accept="image/*,.heic,.heif" multiple hidden></label>
+    <button id="btnOffline">⬇ Offline-Karten</button>
+    <button id="btnLegend">ⓘ Kartenlegende</button>
+    <button id="btnGpxExport">Track als GPX speichern</button>
+    <label class="filebtn">GPX-Route laden<input type="file" id="gpxInput" accept=".gpx,application/gpx+xml" hidden></label>
+    <button id="btnRouteClear">Geladene Route entfernen</button>
+    <button id="btnResetAll" class="danger">Σ alle Touren zurücksetzen</button>
+    <p class="hint">Tipp: Lange auf die Karte drücken (oder Rechtsklick), um ein Navigationsziel zu setzen.</p>
+  </div>
+
+  <!-- Routenplaner -->
+  <section id="planner" hidden>
+    <div class="pl-head">
+      <b>Routenplaner</b>
+      <select id="plProfile" title="Profil">
+        <option value="hiking-mountain">🥾 Wandern</option>
+        <option value="trekking">🚲 Fahrrad</option>
+        <option value="mtb">🚵 Mountainbike</option>
+        <option value="fastbike">🚴 Rennrad</option>
+      </select>
+      <button id="plClose" class="icon small" title="Planer schließen">✕</button>
+    </div>
+    <div class="pl-search">
+      <input id="plSearch" type="search" placeholder="Ort suchen und als Wegpunkt hinzufügen…" autocomplete="off">
+      <ul id="plResults" hidden></ul>
+    </div>
+    <p class="hint" id="plHint">Tippe auf die Karte, um Wegpunkte zu setzen. Punkte lassen sich verschieben, ein Tipp auf einen Punkt entfernt ihn.</p>
+    <div class="pl-stats" id="plStats" hidden>
+      <span>↔ <b id="plDist">–</b></span>
+      <span>↗ <b id="plUp">–</b></span>
+      <span>↘ <b id="plDown">–</b></span>
+      <span>⏱ <b id="plTime">–</b></span>
+    </div>
+    <canvas id="plProfileChart" height="70" hidden></canvas>
+    <div class="pl-buttons">
+      <button id="plFromMe">📍 Start: mein Standort</button>
+      <button id="plUndo">↶ Zurück</button>
+      <button id="plClear">Leeren</button>
+    </div>
+    <div class="pl-buttons">
+      <button id="plGpx">GPX speichern</button>
+      <button id="plGo" class="primary">▶ Route folgen</button>
+    </div>
+  </section>
+
+  <!-- Offline-Karten -->
+  <section id="offline" class="sheet" hidden>
+    <div class="pl-head">
+      <b>Offline-Karten</b>
+      <button id="offClose" class="icon small" title="Schließen">✕</button>
+    </div>
+    <p class="hint">Lade das Gebiet deiner Tour vorher (z. B. im WLAN) herunter. Danach funktionieren Karte, GPS, Aufzeichnung und Navigation entlang einer gespeicherten Route auch ohne Netz.</p>
+    <div class="off-grid">
+      <label>Gebiet
+        <select id="offMode">
+          <option value="view">Sichtbarer Kartenausschnitt</option>
+          <option value="route">Entlang der geplanten Route</option>
+        </select>
+      </label>
+      <label hidden>Breite links/rechts der Route
+        <select id="offBuffer">
+          <option value="1000">1 km</option>
+          <option value="2000" selected>2 km</option>
+          <option value="5000">5 km</option>
+        </select>
+      </label>
+      <label>Detailstufe
+        <select id="offZoom">
+          <option value="14">Übersicht (Zoom 14)</option>
+          <option value="15" selected>Wandern (Zoom 15)</option>
+          <option value="16">Detail (Zoom 16)</option>
+          <option value="17">Maximal (Zoom 17, sehr groß)</option>
+        </select>
+      </label>
+    </div>
+    <label class="check"><input type="checkbox" id="offSchutz" checked> Schutzgebiete (NSG, LSG, Biosphäre)</label>
+    <label class="check"><input type="checkbox" id="offMil" checked> Militärische Sperrgebiete</label>
+    <p id="offEstimate" class="off-est"></p>
+    <progress id="offBar" value="0" max="1" hidden></progress>
+    <p id="offProgress" class="hint" hidden></p>
+    <div class="pl-buttons">
+      <button id="offStart" class="primary">⬇ Herunterladen</button>
+      <button id="offCancel" class="danger" hidden>Abbrechen</button>
+    </div>
+    <h4>Gespeichert</h4>
+    <ul id="offList"></ul>
+    <p id="offUsage" class="hint"></p>
+    <button id="offClear" class="danger">Alle Offline-Karten löschen</button>
+  </section>
+
+  <!-- Kartenlegende -->
+  <section id="legend" hidden>
+    <div class="pl-head">
+      <b>Legende</b>
+      <button id="legendClose" class="icon small" title="Legende schließen">✕</button>
+    </div>
+    <input id="legendSearch" type="search" placeholder="Zeichen suchen, z. B. Hütte, Wald, Weg…" autocomplete="off">
+    <div id="legendBody"></div>
+  </section>
+
+  <!-- Fotos ohne GPS platzieren -->
+  <section id="photoPlace" hidden>
+    <p id="photoPlaceText"></p>
+    <div class="pl-buttons">
+      <button id="photoPlaceHere">📍 Mein Standort</button>
+      <button id="photoPlaceSkip">Überspringen</button>
+    </div>
+  </section>
+
+  <div id="toast" hidden></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+  <script src="route.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
+  <script src="photos.js"></script>
+  <script src="https://unpkg.com/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js"></script>
+  <script src="military.js"></script>
+  <script src="legend.js"></script>
+  <script src="offline.js"></script>
+</body>
+</html>
