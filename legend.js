@@ -79,6 +79,7 @@
   OTM_SECTIONS.forEach(([title, items]) => {
     html += `<h3>${title}</h3><ul>${items.map(([f, l]) => row(`<img src="${OTM}${f}" alt="" loading="lazy">`, l)).join('')}</ul>`;
   });
+  html += '<p class="hint">Die Zeichen gelten für die Topokarte. Im Satellitenbild werden nur Straßen und Ortsnamen eingeblendet.</p>';
   html += '<p class="hint">Kartenzeichen: Legende von <a href="https://opentopomap.org/about#legende" target="_blank" rel="noopener">OpenTopoMap</a> (CC-BY-SA). Höhenlinien sind braun, Gewässer blau, Siedlungen grau.</p>';
 
   const panel = document.getElementById('legend');
