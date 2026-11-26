@@ -9,12 +9,29 @@ const STORE_KEY = 'outdoorNavi.v1';
 const map = L.map('map', { zoomControl: true }).setView([51.1657, 10.4515], 6);
 // crossOrigin: Kacheln werden als normale (nicht „opake“) Antworten geladen – wichtig für den Offline-Speicher
 const otmLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-  maxZoom: 17,
+  maxZoom: 19, maxNativeZoom: 17,   // ab Zoom 18 (nur für Satellit sinnvoll) wird die Topokarte vergrößert
   subdomains: 'abc',
   crossOrigin: true,
   attribution: 'Karte: © <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA) · Daten: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende, SRTM'
-}).addTo(map);
+});
 window.otmLayer = otmLayer;
+
+/* ---------- Satellitenbild (Esri World Imagery) + Straßen und Ortsnamen ---------- */
+const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+const satLayer = L.layerGroup([
+  L.tileLayer(ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19, maxNativeZoom: 19,
+    attribution: 'Satellitenbild: © Esri, Maxar, Earthstar Geographics u. a.'
+  }),
+  L.tileLayer(ESRI + 'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, opacity: 0.7 }),
+  L.tileLayer(ESRI + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 })
+]);
+window.baseLayers = { topo: otmLayer, sat: satLayer };
+const BASE_KEY = 'outdoorNavi.base';
+let baseName = 'topo';
+try { if (localStorage.getItem(BASE_KEY) === 'sat') baseName = 'sat'; } catch (e) {}
+if (baseName === 'sat' && !navigator.onLine) baseName = 'topo';   // Satellit braucht Internet
+baseLayers[baseName].addTo(map);
 
 /* ---------- Schutzgebiete (Bundesamt für Naturschutz, amtliche Daten) ---------- */
 // Reihenfolge = Zeichenreihenfolge: LSG unten, Biosphärenreservate, NSG oben
@@ -29,7 +46,7 @@ SCHUTZ.forEach((s, i) => {
   map.createPane('sg-' + s.key).style.zIndex = 300 + i;   // über der Topo-Karte, unter dem Track
   const lyr = L.tileLayer.wms(BFN_WMS, {
     layers: s.layer, styles: '', format: 'image/png', transparent: true, version: '1.3.0',
-    tileSize: 512, zoomOffset: 0, opacity: 0.85, maxZoom: 17,
+    tileSize: 512, zoomOffset: 0, opacity: 0.85, maxZoom: 19,
     pane: 'sg-' + s.key, className: 'sg-' + s.key,
     referrerPolicy: 'no-referrer',   // BfN-Server blockt Anfragen mit fremdem Referer
     crossOrigin: true,
@@ -39,9 +56,50 @@ SCHUTZ.forEach((s, i) => {
   s.tileLayer = lyr;
   overlays[`<span class="swatch" style="color:${s.color}"></span>${s.label}`] = lyr;
 });
-const layerControl = L.control.layers(null, overlays, { position: 'topright', collapsed: true }).addTo(map);
+const layerControl = L.control.layers(
+  { '🗺 Topokarte': otmLayer, '🛰 Satellitenbild': satLayer }, overlays,
+  { position: 'topright', collapsed: true }
+).addTo(map);
 window.layerControl = layerControl;
 window.schutzLayers = SCHUTZ.map((s) => s.tileLayer);
+
+/* Kartenart umschalten (Knopf auf der Karte und Ebenen-Auswahl) */
+function setBase(name, quiet) {
+  if (name === 'sat' && !navigator.onLine) { toast('Satellitenbilder brauchen Internet.'); return; }
+  const other = name === 'sat' ? 'topo' : 'sat';
+  if (map.hasLayer(baseLayers[other])) map.removeLayer(baseLayers[other]);
+  if (!map.hasLayer(baseLayers[name])) baseLayers[name].addTo(map);
+  baseLayers[name].bringToBack && baseLayers[name].bringToBack();
+}
+map.on('baselayerchange', (e) => {
+  baseName = e.layer === satLayer ? 'sat' : 'topo';
+  try { localStorage.setItem(BASE_KEY, baseName); } catch (err) {}
+  const btn = document.querySelector('.base-btn');
+  if (btn) { btn.textContent = baseName === 'sat' ? '🗺' : '🛰'; btn.title = baseName === 'sat' ? 'Topokarte zeigen' : 'Satellitenbild zeigen'; }
+});
+const BaseButton = L.Control.extend({
+  options: { position: 'topright' },
+  onAdd() {
+    const b = L.DomUtil.create('button', 'legend-btn base-btn');
+    b.type = 'button';
+    b.textContent = baseName === 'sat' ? '🗺' : '🛰';
+    b.title = baseName === 'sat' ? 'Topokarte zeigen' : 'Satellitenbild zeigen';
+    L.DomEvent.disableClickPropagation(b);
+    b.onclick = () => {
+      const next = baseName === 'sat' ? 'topo' : 'sat';
+      if (next === 'sat' && !navigator.onLine) { toast('Satellitenbilder brauchen Internet.'); return; }
+      setBase(next);
+      map.fire('baselayerchange', { layer: baseLayers[next], name: next });
+      // Ebenen-Auswahl synchron halten
+      layerControl._update && layerControl._update();
+    };
+    return b;
+  }
+});
+map.addControl(new BaseButton());
+window.addEventListener('offline', () => {
+  if (baseName === 'sat') { setBase('topo'); map.fire('baselayerchange', { layer: otmLayer }); layerControl._update(); toast('📴 Offline – zurück zur Topokarte (Satellitenbilder brauchen Internet)'); }
+});
 
 const $ = (id) => document.getElementById(id);
 const trackLine = L.polyline([], { color: '#d6332a', weight: 5, opacity: 0.85 }).addTo(map);
