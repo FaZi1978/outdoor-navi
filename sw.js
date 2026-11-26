@@ -1,7 +1,7 @@
 // Service Worker: macht die App offline nutzbar
 // - App-Dateien + Bibliotheken: sofort aus dem Cache, im Hintergrund aktualisieren
 // - Kartenkacheln: Cache zuerst (auch die per „Offline-Karten“ geladenen), sonst Netz
-const APP_CACHE = 'outdoor-app-v9';
+const APP_CACHE = 'outdoor-app-v10';
 const TILE_CACHE = 'outdoor-tiles-v2';     // muss zu offline.js passen
 const LEAFLET = 'https://unpkg.com/leaflet@1.9.4/dist/';
 const APP_FILES = [
