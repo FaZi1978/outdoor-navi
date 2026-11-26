@@ -228,8 +228,9 @@
     const off = !navigator.onLine;
     el('netState').hidden = !off;
     const maxStored = areas.reduce((m, a) => Math.max(m, a.maxZoom), 0);
-    const native = off && maxStored ? maxStored : undefined;
     [otmLayer].concat(window.schutzLayers || []).forEach((lyr) => {
+      if (!('_onlineNative' in lyr)) lyr._onlineNative = lyr.options.maxNativeZoom;   // Online-Standard merken
+      const native = off && maxStored ? Math.min(maxStored, lyr._onlineNative || 99) : lyr._onlineNative;
       if (lyr.options.maxNativeZoom !== native) { lyr.options.maxNativeZoom = native; if (lyr._map) lyr.redraw(); }
     });
   }
