@@ -238,6 +238,20 @@ button:disabled { opacity: .5; }
   padding: 6px 0; border-bottom: 1px solid rgba(127,127,127,.2); font-variant-numeric: tabular-nums;
 }
 .wx-t { white-space: nowrap; }
+/* Kacheln rechts: versteckt, per Wischen vom Rand einblenden */
+.side-tiles { transform: translateX(calc(100% + 16px)); transition: transform .25s ease; }
+.side-tiles.open { transform: none; }
+#tileEdge {
+  position: fixed; z-index: 999; right: 0; width: 26px;
+  top: calc(150px + env(safe-area-inset-top)); bottom: calc(90px + env(safe-area-inset-bottom));
+  touch-action: none; display: flex; align-items: center; justify-content: flex-end; cursor: pointer;
+}
+#tileEdge span {
+  width: 5px; height: 56px; margin-right: 3px; border-radius: 3px;
+  background: rgba(29,36,31,.45); box-shadow: 0 0 0 1px rgba(255,255,255,.7);
+}
+#tileEdge.hidden { display: none; }
+
 /* Taschenmodus */
 #pocket {
   position: fixed; inset: 0; z-index: 9999; background: #000; color: #555;
