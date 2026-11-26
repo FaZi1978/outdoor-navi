@@ -30,7 +30,7 @@
         interactive: false,
         minZoom: 9,
         maxNativeZoom: 14,   // darüber werden die Kacheln vergrößert
-        maxZoom: 17,
+        maxZoom: 19,
         attribution: 'Sperrgebiete: © <a href="https://openfreemap.org">OpenFreeMap</a>, © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       });
       group.addLayer(layer);
