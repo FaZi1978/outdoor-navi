@@ -1,12 +1,12 @@
 // Service Worker: macht die App offline nutzbar
 // - App-Dateien + Bibliotheken: sofort aus dem Cache, im Hintergrund aktualisieren
 // - Kartenkacheln: Cache zuerst (auch die per „Offline-Karten“ geladenen), sonst Netz
-const APP_CACHE = 'outdoor-app-v31';
+const APP_CACHE = 'outdoor-app-v32';
 const TILE_CACHE = 'outdoor-tiles-v2';     // muss zu offline.js passen
 const LEAFLET = 'https://unpkg.com/leaflet@1.9.4/dist/';
 const APP_FILES = [
   './', './index.html', './style.css', './app.js', './route.js', './photos.js', './legend.js',
-  './military.js', './offline.js', './pressure.js', './tours.js', './weather.js', './pocket.js', './tiles.js', './manifest.json', './icon.svg',
+  './military.js', './offline.js', './pressure.js', './tours.js', './weather.js', './pocket.js', './fitness.js', './tiles.js', './manifest.json', './icon.svg',
   './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   LEAFLET + 'leaflet.css', LEAFLET + 'leaflet.js',
   LEAFLET + 'images/marker-icon.png', LEAFLET + 'images/marker-icon-2x.png', LEAFLET + 'images/marker-shadow.png',
