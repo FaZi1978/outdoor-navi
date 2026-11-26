@@ -28,6 +28,16 @@
       if (main * sign > 30 && Math.abs(main) > Math.abs(cross)) { p0 = null; action(); }
     });
     ['pointerup', 'pointercancel'].forEach((t) => target.addEventListener(t, () => { p0 = null; }));
+    // Zusätzlich Touch-Ereignisse (falls der Browser die Pointer-Geste doch abbricht)
+    let t0 = null;
+    target.addEventListener('touchstart', (e) => { const t = e.touches[0]; t0 = { x: t.clientX, y: t.clientY }; }, { passive: true });
+    target.addEventListener('touchmove', (e) => {
+      if (!t0) return;
+      const t = e.touches[0], dx = t.clientX - t0.x, dy = t.clientY - t0.y;
+      const main = axis === 'x' ? dx : dy, cross = axis === 'x' ? dy : dx;
+      if (main * sign > 30 && Math.abs(main) > Math.abs(cross)) { t0 = null; p0 = null; action(); }
+    }, { passive: true });
+    target.addEventListener('touchend', () => { t0 = null; }, { passive: true });
   }
 
   function drawer({ panel, cls, edgeId, axis, openSign, keepOpen }) {
