@@ -302,7 +302,6 @@ $('btnPause').onclick = () => {
   save(); render(); toast('Pausiert');
 };
 $('btnStop').onclick = () => {
-  if (!confirm('Tour beenden? Die Werte bleiben angezeigt, bis du eine neue Tour startest.')) return;
   state.activeMs = activeMs(); state.running = false; state.paused = false; state.resumedAt = null;
   state.endedAt = Date.now();
   releaseWakeLock(); save(); render();
