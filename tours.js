@@ -156,6 +156,9 @@
       const id = 'tour-' + start;
       if (await getTour(id)) return id;   // schon gespeichert
       const stats = computeStats(points, s.activeMs, s.maxSpeed, s.distance);
+      // Kalorien (Schätzung) mit den Fitnessdaten zum Zeitpunkt der Tour festhalten
+      const fp = window.fitness && fitness.profile();
+      if (fp) { stats.kcal = Math.round(fitness.calcKcal(points) || 0); stats.activity = fp.activity; }
       let image = null, imageComplete = false;
       try { const r = await makeTourImage(points); image = r.blob; imageComplete = r.complete; } catch (e) { console.error('Tourbild', e); }
       const d = new Date(start);
@@ -259,6 +262,11 @@
         <div><span>Aufstieg</span><b>↗ ${s.up} m</b></div>
         <div><span>Abstieg</span><b>↘ ${s.down} m</b></div>
         <div><span>Höhe min / max</span><b>${s.minEle != null ? s.minEle + ' / ' + s.maxEle + ' m' : '–'}</b></div>
+        ${(() => {
+          // Ältere Touren ohne gespeicherten Wert: mit den aktuellen Fitnessdaten nachrechnen
+          const k = s.kcal != null ? s.kcal : (window.fitness && fitness.profile() ? Math.round(fitness.calcKcal(t.points) || 0) : null);
+          return `<div class="t-kcal"><span>Kalorien (Schätzung)${s.activity ? ' · ' + fitness.activityName(s.activity) : ''}</span><b>${k != null ? '🔥 ≈ ' + k.toLocaleString('de-DE') + ' kcal' : '<small>Fitnessdaten im Menü eintragen</small>'}</b></div>`;
+        })()}
       </div>
       <canvas id="tProfile" height="80"></canvas>
       <h4>Fotos dieser Tour (${photos.length})</h4>
