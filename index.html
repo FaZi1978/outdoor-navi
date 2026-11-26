@@ -75,6 +75,7 @@
   <div id="menu" hidden>
     <button id="btnPocket" class="primary">🌙 Taschenmodus (GPS läuft weiter)</button>
     <button id="btnTours" class="primary">📚 Meine Touren</button>
+    <button id="btnFitness" class="primary">💪 Fitnessdaten</button>
     <button id="btnOffline">⬇ Offline-Karten</button>
     <button id="btnGpxExport">Track als GPX speichern</button>
     <label class="filebtn">GPX-Route laden<input type="file" id="gpxInput" accept=".gpx,application/gpx+xml" hidden></label>
@@ -82,7 +83,7 @@
     <button id="btnResetAll" class="danger">Σ alle Touren zurücksetzen</button>
     <p class="hint">Tipp: Lange auf die Karte drücken (oder Rechtsklick), um ein Navigationsziel zu setzen.</p>
     <button id="btnUpdate">🔄 App aktualisieren</button>
-    <p class="hint" id="appVersion">Version 31</p>
+    <p class="hint" id="appVersion">Version 32</p>
   </div>
 
   <!-- Routenplaner -->
@@ -181,10 +182,46 @@
     <div id="pkInfo">
       <div class="pk-big"><b id="pkSpeed">0,0</b> <small>km/h</small></div>
       <div class="pk-row"><b id="pkDist">0,00</b> <small>km</small> · <b id="pkTime">00:00:00</b></div>
+      <div class="pk-row">🔥 <b id="pkKcal">–</b> <small>kcal</small></div>
       <div id="pkGps">GPS</div>
     </div>
     <button id="pkUnlock" type="button"><span>🔒</span> Zum Entsperren gedrückt halten</button>
   </div>
+
+  <!-- Kalorien während der Tour -->
+  <button id="kcalTile" type="button" title="Kalorienverbrauch (Schätzung) – antippen für Fitnessdaten" hidden></button>
+
+  <!-- Fitnessdaten -->
+  <section id="fitness" hidden>
+    <div class="pl-head">
+      <b>💪 Fitnessdaten</b>
+      <button id="fitClose" class="icon small" title="Schließen">✕</button>
+    </div>
+    <div class="fit-form">
+      <label>Körpergröße <span><input id="fitHeight" type="number" inputmode="decimal" min="100" max="250" placeholder="z. B. 178"> cm</span></label>
+      <label>Gewicht <span><input id="fitWeight" type="number" inputmode="decimal" min="25" max="300" step="0.1" placeholder="z. B. 75"> kg</span></label>
+      <label>Geschlecht
+        <select id="fitSex">
+          <option value="">– bitte wählen –</option>
+          <option value="m">männlich</option>
+          <option value="w">weiblich</option>
+          <option value="d">divers</option>
+        </select>
+      </label>
+      <label>Alter <span><input id="fitAge" type="number" inputmode="numeric" min="10" max="110" placeholder="z. B. 45"> Jahre</span><small class="fit-note">freiwillig – macht die Schätzung genauer</small></label>
+      <label>Aktivität
+        <select id="fitAct">
+          <option value="walk">Wandern / Gehen</option>
+          <option value="run">Laufen / Joggen</option>
+          <option value="bike">Radfahren</option>
+          <option value="mtb">Mountainbike</option>
+        </select>
+      </label>
+    </div>
+    <div id="fitInfo"></div>
+    <button id="fitSave" class="primary">Speichern</button>
+    <p class="hint">Der Kalorienverbrauch ist eine Schätzung aus deinen Körperdaten, Geschwindigkeit, Zeit, Strecke und Steigung (GPS). Tatsächliche Werte können je nach Fitness, Gelände und Gepäck um 20 % und mehr abweichen. Die Daten bleiben nur auf diesem Handy.</p>
+  </section>
 
   <section id="weather" hidden>
     <div class="pl-head">
@@ -226,6 +263,7 @@
   <script src="legend.js"></script>
   <script src="weather.js"></script>
   <script src="pocket.js"></script>
+  <script src="fitness.js"></script>
   <script src="tiles.js"></script>
   <script src="offline.js"></script>
   <script src="pressure.js"></script>
