@@ -295,6 +295,7 @@ $('btnStart').onclick = () => {
     toast('Fortgesetzt');
   }
   follow = true; requestWakeLock(); save(); render();
+  if (window.topTiles) topTiles.show();   // Statistik-Kacheln oben automatisch einblenden
 };
 $('btnPause').onclick = () => {
   state.activeMs = activeMs(); state.paused = true; state.resumedAt = null;
