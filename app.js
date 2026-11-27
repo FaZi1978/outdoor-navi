@@ -41,6 +41,19 @@ const SCHUTZ = [
   { key: 'bio', layer: 'Biosphaerenreservate', label: 'Biosphärenreservate', color: '#8f33c7' },
   { key: 'nsg', layer: 'Naturschutzgebiete', label: 'Naturschutzgebiete (NSG)', color: '#db1414' }
 ];
+/* Ein-/Ausschalten der Ebenen merken (gilt nach Neustart der App weiter) */
+const OVL_KEY = 'outdoorNavi.overlays.v1';
+let ovlState = {};
+try { ovlState = JSON.parse(localStorage.getItem(OVL_KEY)) || {}; } catch (e) {}
+// Soll die Ebene beim Start sichtbar sein? Ohne gespeicherte Wahl: Standard (an)
+window.overlayWanted = (key, def = true) => (key in ovlState ? !!ovlState[key] : def);
+// Künftige Änderungen (Ebenen-Auswahl) speichern
+window.trackOverlay = (layer, key) => {
+  const store = (on) => { ovlState[key] = on; try { localStorage.setItem(OVL_KEY, JSON.stringify(ovlState)); } catch (e) {} };
+  map.on('layeradd', (e) => { if (e.layer === layer) store(true); });
+  map.on('layerremove', (e) => { if (e.layer === layer) store(false); });
+};
+
 const overlays = {};
 SCHUTZ.forEach((s, i) => {
   map.createPane('sg-' + s.key).style.zIndex = 300 + i;   // über der Topo-Karte, unter dem Track
@@ -52,7 +65,8 @@ SCHUTZ.forEach((s, i) => {
     crossOrigin: true,
     attribution: 'Schutzgebiete: © <a href="https://www.bfn.de">BfN</a>'
   });
-  lyr.addTo(map);
+  if (overlayWanted('sg-' + s.key)) lyr.addTo(map);
+  trackOverlay(lyr, 'sg-' + s.key);
   s.tileLayer = lyr;
   overlays[`<span class="swatch" style="color:${s.color}"></span>${s.label}`] = lyr;
 });
