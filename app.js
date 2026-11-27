@@ -7,26 +7,39 @@ const STORE_KEY = 'outdoorNavi.v1';
 
 /* ---------- Karte (OpenTopoMap) ---------- */
 const map = L.map('map', { zoomControl: true }).setView([51.1657, 10.4515], 6);
+// Flüssiges Wischen: Kacheln schon während der Bewegung laden (Leaflet wartet auf Handys sonst,
+// bis die Bewegung ganz vorbei ist → weiße Flächen) und ringsum mehr Reserve vorhalten.
+const SMOOTH = { updateWhenIdle: false, keepBuffer: 4 };
+// Grobe Unterlage: dieselbe Karte 2 Zoomstufen gröber (1024-px-Kacheln = 16× weniger Kacheln).
+// Ist sofort da und füllt Lücken unscharf, bis die scharfen Kacheln geladen sind.
+const underlay = (url, opts) => L.tileLayer(url, Object.assign({
+  tileSize: 1024, zoomOffset: -2, minNativeZoom: 2, updateWhenIdle: false, keepBuffer: 2, zIndex: 0
+}, opts));
+
 // crossOrigin: Kacheln werden als normale (nicht „opake“) Antworten geladen – wichtig für den Offline-Speicher
-const otmLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+const OTM_URL = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+const otmLayer = L.tileLayer(OTM_URL, Object.assign({
   maxZoom: 19, maxNativeZoom: 17,   // ab Zoom 18 (nur für Satellit sinnvoll) wird die Topokarte vergrößert
   subdomains: 'abc',
-  crossOrigin: true,
+  crossOrigin: true, zIndex: 1,
   attribution: 'Karte: © <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA) · Daten: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende, SRTM'
-});
+}, SMOOTH));
 window.otmLayer = otmLayer;
+const otmUnder = underlay(OTM_URL, { maxZoom: 19, maxNativeZoom: 17, subdomains: 'abc', crossOrigin: true });
+const topoBase = L.layerGroup([otmUnder, otmLayer]);
 
 /* ---------- Satellitenbild (Esri World Imagery) + Straßen und Ortsnamen ---------- */
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
 const satLayer = L.layerGroup([
-  L.tileLayer(ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 19, maxNativeZoom: 19,
+  underlay(ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, maxNativeZoom: 19 }),
+  L.tileLayer(ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', Object.assign({
+    maxZoom: 19, maxNativeZoom: 19, zIndex: 1,
     attribution: 'Satellitenbild: © Esri, Maxar, Earthstar Geographics u. a.'
-  }),
+  }, SMOOTH)),
   L.tileLayer(ESRI + 'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, opacity: 0.7 }),
   L.tileLayer(ESRI + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 })
 ]);
-window.baseLayers = { topo: otmLayer, sat: satLayer };
+window.baseLayers = { topo: topoBase, sat: satLayer };
 const BASE_KEY = 'outdoorNavi.base';
 let baseName = 'topo';
 try { if (localStorage.getItem(BASE_KEY) === 'sat') baseName = 'sat'; } catch (e) {}
@@ -59,7 +72,7 @@ SCHUTZ.forEach((s, i) => {
   map.createPane('sg-' + s.key).style.zIndex = 300 + i;   // über der Topo-Karte, unter dem Track
   const lyr = L.tileLayer.wms(BFN_WMS, {
     layers: s.layer, styles: '', format: 'image/png', transparent: true, version: '1.3.0',
-    tileSize: 512, zoomOffset: 0, opacity: 0.85, maxZoom: 19,
+    tileSize: 512, zoomOffset: 0, opacity: 0.85, maxZoom: 19, updateWhenIdle: false,
     pane: 'sg-' + s.key, className: 'sg-' + s.key,
     referrerPolicy: 'no-referrer',   // BfN-Server blockt Anfragen mit fremdem Referer
     crossOrigin: true,
@@ -71,7 +84,7 @@ SCHUTZ.forEach((s, i) => {
   overlays[`<span class="swatch" style="color:${s.color}"></span>${s.label}`] = lyr;
 });
 const layerControl = L.control.layers(
-  { '🗺 Topokarte': otmLayer, '🛰 Satellitenbild': satLayer }, overlays,
+  { '🗺 Topokarte': topoBase, '🛰 Satellitenbild': satLayer }, overlays,
   { position: 'topright', collapsed: true }
 ).addTo(map);
 window.layerControl = layerControl;
@@ -112,7 +125,7 @@ const BaseButton = L.Control.extend({
 });
 map.addControl(new BaseButton());
 window.addEventListener('offline', () => {
-  if (baseName === 'sat') { setBase('topo'); map.fire('baselayerchange', { layer: otmLayer }); layerControl._update(); toast('📴 Offline – zurück zur Topokarte (Satellitenbilder brauchen Internet)'); }
+  if (baseName === 'sat') { setBase('topo'); map.fire('baselayerchange', { layer: topoBase }); layerControl._update(); toast('📴 Offline – zurück zur Topokarte (Satellitenbilder brauchen Internet)'); }
 });
 
 const $ = (id) => document.getElementById(id);
