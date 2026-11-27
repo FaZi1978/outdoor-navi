@@ -446,9 +446,12 @@ progress[hidden] { display: none; }
 .leaflet-top.leaflet-left, .leaflet-top.leaflet-right { top: 150px; }
 
 /* Schutzgebiete (Kacheln vom BfN, per SVG-Filter eingefärbt) */
-.sg-nsg { filter: url(#f-nsg); }
-.sg-lsg { filter: url(#f-lsg); }
-.sg-bio { filter: url(#f-bio); }
+/* CSS-Filterketten statt SVG-Filter (url(#…)): werden auf dem Handy vom Grafikchip berechnet,
+   SVG-Filter dagegen bei jedem Verschieben/Zoomen vom Prozessor → Ruckeln.
+   Ergebnis: jede Fläche einfarbig in Rot/Grün/Violett, Transparenz bleibt erhalten. */
+.sg-nsg { filter: brightness(0) saturate(100%) invert(14%) sepia(77%) saturate(7228%) hue-rotate(356deg) brightness(88%) contrast(94%); }
+.sg-lsg { filter: brightness(0) saturate(100%) invert(40%) sepia(28%) saturate(4143%) hue-rotate(109deg) brightness(94%) contrast(80%); }
+.sg-bio { filter: brightness(0) saturate(100%) invert(23%) sepia(61%) saturate(3186%) hue-rotate(266deg) brightness(92%) contrast(91%); }
 .leaflet-control-layers { border-radius: 12px !important; }
 .leaflet-control-layers-overlays label { font-size: 14px; padding: 3px 0; }
 .swatch {
