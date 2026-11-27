@@ -13,6 +13,8 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: #ddd; }
 #map { position: fixed; inset: 0; }
+/* Noch nicht geladene Stellen kartenfarbig statt weiß/grau */
+#map.leaflet-container { background: #e8e4d8; }
 
 #stats {
   position: fixed; z-index: 1000;
