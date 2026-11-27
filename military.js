@@ -32,13 +32,15 @@
         pane: 'military',
         interactive: false,
         minZoom: 9,
-        maxNativeZoom: 14,   // darüber werden die Kacheln vergrößert
+        // Zoom 12: diese Kacheln enthalten noch keine Gebäude → viel weniger Rechenarbeit beim Entpacken
+        // (sonst Ruckeln auf dem Handy, z. B. nach der Ortssuche); darüber werden sie vergrößert
+        maxNativeZoom: 12,
         maxZoom: 19,
         attribution: 'Sperrgebiete: © <a href="https://openfreemap.org">OpenFreeMap</a>, © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       });
       group.addLayer(layer);
       window.militaryLayer = layer;   // für die Treffer-Prüfung beim Antippen (areas.js)
-      window.militaryTiles = { url: tj.tiles[0], tilejson: TILEJSON, minZoom: 9, maxZoom: 14 };
+      window.militaryTiles = { url: tj.tiles[0], tilejson: TILEJSON, minZoom: 9, maxZoom: 12 };
     })
     .catch(() => toast('Militärische Sperrgebiete konnten nicht geladen werden (offline?)'));
 })();
