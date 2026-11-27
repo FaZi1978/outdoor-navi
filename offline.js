@@ -116,14 +116,34 @@
   }
 
   /* ---------- Download ---------- */
+  // Meldung direkt im Offline-Fenster (Hinweise unten wären vom Fenster verdeckt)
+  function status(msg, warn) {
+    const p = el('offProgress');
+    p.hidden = false; p.textContent = msg;
+    p.classList.toggle('warn', !!warn);
+  }
+
   async function download() {
+    if (running) return;
+    try {
+      await doDownload();
+    } catch (e) {
+      console.error('Offline-Download', e);
+      running = null; setBusy(false);
+      status('Download konnte nicht starten: ' + (e && e.message ? e.message : e), true);
+    }
+  }
+
+  async function doDownload() {
     const area = currentArea();
-    if (!area) return;
-    if (!navigator.onLine) return toast('Zum Herunterladen wird Internet benötigt.');
+    if (!area) { status('Erst im Routenplaner eine Route berechnen.', true); return; }
     const maxZoom = +el('offZoom').value;
     const jobs = buildJobs(area, maxZoom, el('offSchutz').checked, el('offMil').checked);
-    if (jobs.length > MAX_TILES) return;
-    try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) {}
+    if (jobs.length > MAX_TILES) { status('Gebiet zu groß – bitte kleineren Ausschnitt wählen.', true); return; }
+    if (!('caches' in window)) { status('Dieser Browser kann keine Offline-Karten speichern. Bitte Chrome verwenden.', true); return; }
+    if (!navigator.onLine) status('Hinweis: Das Handy meldet „offline“ – Versuch trotzdem…', true);
+    // Dauerhaften Speicher anfragen, aber nicht darauf warten (kann je nach Browser hängen)
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) {}
 
     const cache = await caches.open(TILE_CACHE);
     running = { cancel: false };
@@ -131,7 +151,7 @@
     setBusy(true);
     const update = () => {
       el('offBar').value = done / jobs.length;
-      el('offProgress').textContent = `${done.toLocaleString('de-DE')} / ${jobs.length.toLocaleString('de-DE')} Kacheln` + (failed ? ` · ${failed} Fehler` : '');
+      status(`${done.toLocaleString('de-DE')} / ${jobs.length.toLocaleString('de-DE')} Kacheln` + (failed ? ` · ${failed} Fehler` : ''), false);
     };
     async function worker() {
       while (i < jobs.length && !running.cancel) {
@@ -166,13 +186,18 @@
         bounds: [[b.getSouth(), b.getWest()], [b.getNorth(), b.getEast()]], date: Date.now() });
       saveMeta();
     }
-    toast(cancelled ? 'Download abgebrochen – Teil gespeichert.' : `Offline-Karte gespeichert (${(bytes / 1e6).toFixed(1)} MB neu)` + (failed ? `, ${failed} Kacheln fehlgeschlagen` : ''));
+    const msg = cancelled ? 'Download abgebrochen – Teil gespeichert.'
+      : failed === jobs.length ? 'Download fehlgeschlagen – keine Kachel geladen. Internetverbindung prüfen.'
+      : `✔ Offline-Karte gespeichert (${(bytes / 1e6).toFixed(1)} MB neu)` + (failed ? `, ${failed} Kacheln fehlgeschlagen` : '');
+    status(msg, cancelled || failed > 0);
+    toast(msg);
     renderList(); renderUsage(); estimate();
   }
 
   function setBusy(b) {
     el('offStart').hidden = b; el('offCancel').hidden = !b;
-    el('offBar').hidden = !b; el('offProgress').hidden = !b;
+    el('offBar').hidden = !b;
+    if (b) el('offProgress').hidden = false;   // nach dem Download bleibt die Ergebnis-Meldung stehen
     ['offMode', 'offZoom', 'offSchutz', 'offMil', 'offBuffer'].forEach((id) => { el(id).disabled = b; });
   }
 
