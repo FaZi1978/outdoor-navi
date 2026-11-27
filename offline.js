@@ -23,13 +23,18 @@
   function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(areas)); } catch (e) {} }
 
   /* ---------- Kachel-URLs exakt wie Leaflet sie erzeugt ---------- */
+  // Funktioniert auch für Ebenen, die gerade nicht angezeigt werden (z. B. Topokarte bei aktivem
+  // Satellitenbild): der Kachelbereich (_globalTileRange) wird dafür passend zur Zoomstufe gesetzt.
   function leafletUrl(layer, x, y, z) {
-    const m = layer._map, tz = layer._tileZoom;
+    const m = layer._map, tz = layer._tileZoom, gr = layer._globalTileRange;
     layer._map = map; layer._tileZoom = z;
+    layer._globalTileRange = layer._pxBoundsToTileRange(map.getPixelWorldBounds(z));
     const c = L.point(x, y); c.z = z;
-    const url = layer.getTileUrl(c);
-    layer._map = m; layer._tileZoom = tz;
-    return url;
+    try {
+      return layer.getTileUrl(c);
+    } finally {
+      layer._map = m; layer._tileZoom = tz; layer._globalTileRange = gr;
+    }
   }
 
   /* ---------- Welche Kacheln gehören zum Gebiet? ---------- */
@@ -107,7 +112,9 @@
     const a = currentArea();
     el('offBuffer').closest('label').hidden = el('offMode').value !== 'route';
     if (!a) { el('offEstimate').textContent = 'Erst im Routenplaner eine Route berechnen.'; el('offStart').disabled = true; return; }
-    const jobs = buildJobs(a, +el('offZoom').value, el('offSchutz').checked, el('offMil').checked);
+    let jobs;
+    try { jobs = buildJobs(a, +el('offZoom').value, el('offSchutz').checked, el('offMil').checked); }
+    catch (e) { el('offEstimate').innerHTML = `<span class="warn">Berechnung fehlgeschlagen: ${e.message}</span>`; return; }
     const bytes = jobs.reduce((s, j) => s + EST_BYTES[j.kind], 0);
     const tooMany = jobs.length > MAX_TILES;
     el('offEstimate').innerHTML = `≈ <b>${jobs.length.toLocaleString('de-DE')}</b> Kacheln, ca. <b>${(bytes / 1e6).toFixed(0)} MB</b>`
