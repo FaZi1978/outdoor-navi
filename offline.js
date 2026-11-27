@@ -27,6 +27,12 @@
   // Satellitenbild): der Kachelbereich (_globalTileRange) wird dafür passend zur Zoomstufe gesetzt.
   function leafletUrl(layer, x, y, z) {
     const m = layer._map, tz = layer._tileZoom, gr = layer._globalTileRange;
+    // WMS-Ebenen (Schutzgebiete), die seit dem Start nie eingeblendet waren: Projektion wie Leaflet beim Einblenden setzen
+    if (layer.wmsParams && !layer._crs) {
+      layer._crs = layer.options.crs || map.options.crs;
+      layer._wmsVersion = parseFloat(layer.wmsParams.version);
+      layer.wmsParams[layer._wmsVersion >= 1.3 ? 'crs' : 'srs'] = layer._crs.code;
+    }
     layer._map = map; layer._tileZoom = z;
     layer._globalTileRange = layer._pxBoundsToTileRange(map.getPixelWorldBounds(z));
     const c = L.point(x, y); c.z = z;
