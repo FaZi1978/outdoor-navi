@@ -13,7 +13,9 @@
   map.getPane('military').style.pointerEvents = 'none';
 
   // Platzhalter, damit die Ebene sofort in der Ebenen-Auswahl steht
-  const group = L.layerGroup().addTo(map);
+  const group = L.layerGroup();
+  if (window.overlayWanted ? overlayWanted('military') : true) group.addTo(map);   // letzte Wahl des Nutzers
+  if (window.trackOverlay) trackOverlay(group, 'military');
   window.militaryGroup = group;
   if (window.layerControl) layerControl.addOverlay(group, '<span class="swatch" style="color:#000"></span>Militärische Sperrgebiete');
 
