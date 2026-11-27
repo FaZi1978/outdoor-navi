@@ -222,8 +222,10 @@
         li.onclick = () => {
           const ll = L.latLng(+r.lat, +r.lon);
           addWaypoint(ll);
-          map.setView(ll, Math.max(map.getZoom(), 13));
           el('plSearch').value = ''; ul.hidden = true;
+          el('plSearch').blur();   // Tastatur schließen, bevor die Karte springt (sonst doppeltes Neuzeichnen)
+          // Direkt springen (ohne Animation über weite Strecken), Zoom 13–15: nicht unnötig viele Kacheln laden
+          setTimeout(() => map.setView(ll, Math.min(Math.max(map.getZoom(), 13), 15), { animate: false }), 250);
         };
         ul.appendChild(li);
       });
